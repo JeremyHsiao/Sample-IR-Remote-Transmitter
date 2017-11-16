@@ -81,3 +81,13 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+*.scvd
+*.bak
+*.i
+*.lst
+KEIL/lst/
+KEIL/obj/clk.crf
+KEIL/obj/
+KEIL/Uart.uvgui.Jeremy.Hsiao
+KEIL/Nu_Link_Driver.ini
+KEIL/Uart.uvopt
