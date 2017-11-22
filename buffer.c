@@ -14,10 +14,6 @@
 #include "N575.h"
 #include "buffer.h"
 
- /* Buffer size, this buffer for uart receive & send data. */
-#define UART_RX_BUF_SIZE      16
-#define UART_TX_BUF_SIZE      16
-
 // helper function
 // Clear Buffer
 #define BUF_CLEAR(WRITE_PTR, REAR_PTR, BUFFER_START_PTR, STATUS_BIT) {  WRITE_PTR=REAR_PTR=BUFFER_START_PTR; STATUS_BIT=0; }
@@ -66,22 +62,35 @@
 //
 
 // UART-RX Buffer
+#define UART_RX_BUF_SIZE      16
 uint8_t u8Buffer_RX[UART_RX_BUF_SIZE];
 uint8_t *UART_BUF_RX_WRITE_PTR = u8Buffer_RX;
 uint8_t *UART_BUF_RX_REAR_PTR = u8Buffer_RX;
 uint8_t UART_BUF_RX_FULL = 0;
 
 // UART-TX Buffer
+#define UART_TX_BUF_SIZE      16
 uint8_t u8Buffer_TX[UART_TX_BUF_SIZE];
 uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
+// IR-pulse-TX Buffer
+#define IR_TX_BUF_SIZE      250
+uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
+uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
+uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
+uint8_t IR_BUF_TX_FULL = 0;
+
+//
+// Common function
+//
+
 void Initialize_buffer(void)
 {
   BUF_CLEAR(UART_BUF_RX_WRITE_PTR, UART_BUF_RX_REAR_PTR, u8Buffer_RX, UART_BUF_RX_FULL);
   BUF_CLEAR(UART_BUF_TX_WRITE_PTR, UART_BUF_TX_REAR_PTR, u8Buffer_TX, UART_BUF_TX_FULL);
-
+  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_REAR_PTR, u32Buffer_IR_TX_Width, IR_BUF_TX_FULL);
 }
 
 //
@@ -164,6 +173,48 @@ uint8_t uart_read_output_buffer(void)
   {
     BUF_PTR_INCREASE(UART_BUF_TX_REAR_PTR,u8Buffer_TX,UART_TX_BUF_SIZE);
     UART_BUF_TX_FULL = FALSE; // Clear buffer-full at the end of a "read"
+  }
+  return return_value;
+}
+
+//
+// IR-pulse-TX Buffer function
+//
+
+uint8_t IR_output_buffer_empty_status(void)
+{
+  return (IR_BUF_TX_WRITE_PTR==IR_BUF_TX_REAR_PTR)?TRUE:FALSE;
+}
+
+uint8_t IR_output_buffer_full_status(void)
+{
+  return (IR_BUF_TX_FULL);
+}
+
+uint8_t IR_add_output_buffer(uint32_t input_data)
+{
+  if(!IR_BUF_TX_FULL)  // must check a buffer-full status before an "add"
+  {
+    *IR_BUF_TX_WRITE_PTR = input_data;
+    BUF_PTR_INCREASE(IR_BUF_TX_WRITE_PTR,u32Buffer_IR_TX_Width,UART_TX_BUF_SIZE);
+    BUF_FULL_CHECK(IR_BUF_TX_WRITE_PTR,IR_BUF_TX_REAR_PTR,UART_TX_BUF_SIZE, IR_BUF_TX_FULL); // always update buffer-full status at the end of an "add"
+    return TRUE;
+  }
+  else
+  {
+    return FALSE;
+  }
+}
+
+uint32_t IR_read_output_buffer(void)
+{
+  uint32_t   return_value;
+
+  return_value = *IR_BUF_TX_REAR_PTR;
+  if(!(IR_BUF_TX_WRITE_PTR==IR_BUF_TX_REAR_PTR))
+  {
+    BUF_PTR_INCREASE(IR_BUF_TX_REAR_PTR,u32Buffer_IR_TX_Width,UART_TX_BUF_SIZE);
+    IR_BUF_TX_FULL = FALSE; // Clear buffer-full at the end of a "read"
   }
   return return_value;
 }

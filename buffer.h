@@ -24,3 +24,8 @@ extern uint8_t uart_output_buffer_empty_status(void);
 extern uint8_t uart_output_buffer_full_status(void);
 extern uint8_t uart_add_output_buffer(uint8_t input_data);
 extern uint8_t uart_read_output_buffer(void);
+
+extern uint8_t IR_output_buffer_empty_status(void);
+extern uint8_t IR_output_buffer_full_status(void);
+extern uint8_t IR_add_output_buffer(uint32_t input_data);
+extern uint32_t IR_read_output_buffer(void);
