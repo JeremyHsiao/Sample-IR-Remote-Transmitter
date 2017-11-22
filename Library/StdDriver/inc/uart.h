@@ -163,7 +163,7 @@ extern "C"
  * \hideinitializer 
  */
 #define UART_IS_TX_EMPTY(uart)    ((uart->FIFOSTS & UART_FIFOSTS_TXEMPTYF_Msk) >> UART_FIFOSTS_TXEMPTYF_Pos)
-
+  #define UART_IS_TX_EMPTY_INT(uart)    ((uart->INTSTS & UART_INTSTS_THERINT_Msk) >> UART_INTSTS_THERINT_Pos) // interrupt based
 
 /**
  *    @brief    Wait specified uart port transmission is over
