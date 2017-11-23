@@ -75,7 +75,7 @@ uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
-// IR-pulse-TX Buffer
+// IR-pulse-TX Array
 #define IR_TX_BUF_SIZE      256
 uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
@@ -156,6 +156,7 @@ uint8_t uart_output_enqueue(uint8_t input_data)
     *UART_BUF_TX_WRITE_PTR = input_data;
     BUF_PTR_INCREASE(UART_BUF_TX_WRITE_PTR,u8Buffer_TX,UART_TX_BUF_SIZE);
     BUF_FULL_CHECK(UART_BUF_TX_WRITE_PTR,UART_BUF_TX_REAR_PTR,UART_TX_BUF_SIZE, UART_BUF_TX_FULL); // always update buffer-full status at the end of an "add"
+    UART0->INTEN |= UART_INTEN_THREIEN_Msk;   // Enable Tx interrupt to consume output buffer  
     return TRUE;
   }
   else
@@ -178,26 +179,24 @@ uint8_t uart_output_dequeue(void)
 }
 
 //
-// IR-pulse-TX Buffer function
+// IR-pulse-TX Array function
 //
-
-uint8_t IR_output_buffer_empty_status(void)
+void IR_output_restart_write_pointer(void)
 {
-  return (IR_BUF_TX_WRITE_PTR==IR_BUF_TX_REAR_PTR)?TRUE:FALSE;
+  IR_BUF_TX_WRITE_PTR = u32Buffer_IR_TX_Width;
 }
 
-uint8_t IR_output_buffer_full_status(void)
+void IR_output_restart_read_pointer(void)
 {
-  return (IR_BUF_TX_FULL);
+  IR_BUF_TX_REAR_PTR = u32Buffer_IR_TX_Width;
 }
 
-uint8_t IR_add_output_buffer(uint32_t input_data)
+uint8_t IR_output_add(uint32_t input_data)
 {
-  if(!IR_BUF_TX_FULL)  // must check a buffer-full status before an "add"
+  if(IR_BUF_TX_WRITE_PTR<(u32Buffer_IR_TX_Width+IR_TX_BUF_SIZE))  // must check a buffer-full status before an "add"
   {
     *IR_BUF_TX_WRITE_PTR = input_data;
-    BUF_PTR_INCREASE(IR_BUF_TX_WRITE_PTR,u32Buffer_IR_TX_Width,UART_TX_BUF_SIZE);
-    BUF_FULL_CHECK(IR_BUF_TX_WRITE_PTR,IR_BUF_TX_REAR_PTR,UART_TX_BUF_SIZE, IR_BUF_TX_FULL); // always update buffer-full status at the end of an "add"
+    IR_BUF_TX_WRITE_PTR++;
     return TRUE;
   }
   else
@@ -206,15 +205,16 @@ uint8_t IR_add_output_buffer(uint32_t input_data)
   }
 }
 
-uint32_t IR_read_output_buffer(void)
+uint8_t IR_output_read(uint32_t *return_value_ptr)
 {
-  uint32_t   return_value;
-
-  return_value = *IR_BUF_TX_REAR_PTR;
-  if(!(IR_BUF_TX_WRITE_PTR==IR_BUF_TX_REAR_PTR))
+  if(IR_BUF_TX_REAR_PTR<IR_BUF_TX_WRITE_PTR)
   {
-    BUF_PTR_INCREASE(IR_BUF_TX_REAR_PTR,u32Buffer_IR_TX_Width,UART_TX_BUF_SIZE);
-    IR_BUF_TX_FULL = FALSE; // Clear buffer-full at the end of a "read"
+    *return_value_ptr = *IR_BUF_TX_REAR_PTR;
+    IR_BUF_TX_REAR_PTR++;
+    return TRUE;
   }
-  return return_value;
+  else
+  {
+    return FALSE;
+  }
 }

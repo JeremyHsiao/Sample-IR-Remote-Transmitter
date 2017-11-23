@@ -13,53 +13,8 @@
 #include <string.h>
 #include "N575.h"
 #include "buffer.h"
-
-void UART0_IRQHandler(void)
-{
-  // Tx when FIFO is empty - interrupt occurs less than using FIFO is not full 
-  if (UART_IS_TX_EMPTY_INT(UART0))
-  {
-    do 
-    {
-      if(!uart_output_queue_empty_status())
-      {
-        UART0->DAT = uart_output_dequeue();
-      }
-      else
-      {
-        UART0->INTEN &= ~UART_INTEN_THREIEN_Msk;
-        break;       // No more data to Tx output
-      }
-    }
-    while(!(UART0->FIFOSTS & UART_FIFOSTS_TXFULL_Msk));   /* If Tx is not full */
-  }
-  // Rx when FIFO is ready - interrupt occurs more than using FIFO is full so that we can prevent IRQ blocking causiing FIFO data overwritten
-	if(UART_IS_RX_READY(UART0))
-  {  
-    while(!(UART0->FIFOSTS & UART_FIFOSTS_RXEMPTY_Msk))
-    {
-      if (!uart_input_queue_full_status())
-      {
-        uart_input_enqueue(UART0->DAT);
-      }
-      else
-      {
-        break;
-      }
-    }
-	}	
-}
-
-void UART_init(void)
-{
-  //CLK_EnableModuleClock(UART_MODULE); 
-	//UART_Open(UART0, 115200);	
-	UART0->INTEN |= UART_INTEN_RDAIEN_Msk;
-  //UART0->INTEN |= UART_INTEN_THREIEN_Msk;
-	NVIC_EnableIRQ(UART0_IRQn);
-	//SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA8MFP_Msk) ) | SYS_GPA_MFP_PA8MFP_UART_TX;
-	//SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA9MFP_Msk) ) | SYS_GPA_MFP_PA9MFP_UART_RX;	
-}
+#include "uart_app.h"
+#include "parser.h"
 
 void SYS_Init(void)
 {
@@ -96,6 +51,9 @@ void SYS_Init(void)
 /* Main */
 int main(void)
 {
+	uint32_t    IR_Repeat_Cnt;
+ 	uint32_t	PWM_period =  (uint32_t) (480000/(38000));		// For 38KHz PWM pulse
+ 	uint32_t	PWM_duty_cycle = 50;
 
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
@@ -105,14 +63,92 @@ int main(void)
     UART_Open(UART0, 115200);
 
     printf("\n+------------------------------------------------------------------------+\n");
-    printf("|                      My Sample                             |\n");
-    printf("+------------------------------------------------------------------------+\n");
-	  printf("Press any key to test.\n");
+    printf(  "|                      Welcome to My IR Transmitter                      |\n");
+    printf(  "+------------------------------------------------------------------------+\n");
 	
     Initialize_buffer();
+	IR_Repeat_Cnt = 0;
  
     while(1)
     {
+        while(!uart_input_queue_empty_status())
+        {
+            uint8_t     input_char;
+            input_char = uart_input_dequeue();
+            ProcessInputChar(input_char);
+
+            if(CheckSum_Ready()==true)
+            {
+                if (Read_CheckSum()==0)
+                {
+                    switch(Read_CMD_Status())
+                    {
+                        case ENUM_CMD_STOP_CMD_RECEIVED:
+                            IR_Repeat_Cnt=0;
+                            Clear_CMD_Status();
+                            // Wait until previous Tx Finish -- to be implemented
+                            Init_ProcessInputChar_State();
+                            IR_output_restart_read_pointer();
+                            // Debug message
+                            {
+                                uart_output_enqueue('S');
+                                uart_output_enqueue('\n');
+                            }
+                            break;
+
+                        case ENUM_CMD_REPEAT_COUNT_RECEIVED:
+                            IR_Repeat_Cnt += Next_Repeat_Count_Get();
+                            Next_Repeat_Count_Set(0);
+                            Clear_CMD_Status();
+                            // Debug message
+                            {
+                                uart_output_enqueue('B');
+                                uart_output_enqueue('\n');
+                            }
+                            break;
+
+                        case ENUM_CMD_WIDTH_DATA_READY:
+                            // Wait until previous Tx Finish -- to be implemented
+                            PWM_period = Next_PWM_Period_Get();
+                            PWM_duty_cycle = Next_DutyCycle_Period_Get();
+                            //IR_Transmit_Buffer_StartSend();
+                            Clear_CMD_Status();
+                            // Debug message
+                            {
+                                
+                            }
+//                            {
+//                                char str[16];
+//                                int  len;
+//                                len = itoa_10(bIrTimeIndexIn_Output, str);
+//                                str[len++] = ' ';
+//                                len += itoa_10(bIrTimeIndexOut_Output, (str+len));
+//                                str[len++] = '\n';
+//                                VirtualSerial_MultiByteToHost(str, (uint16_t) len);
+//                                USB_task_in_main_loop();
+//                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    // Debug message
+                    {
+                        uart_output_enqueue('X');
+                        uart_output_enqueue('\n');
+                    }
+                }
+                Reset_CheckSum();
+                }
+            }
+        
+
+        
+/*        
+      // For testing UART Rx-Tx: read then write        
       while(!uart_input_queue_empty_status())
       {
         if(!uart_output_queue_full_status())   // fill Tx Buffer until either Rx full is empty or Tx buffer is full
@@ -127,6 +163,7 @@ int main(void)
           break;
         }
       }
+*/
     }                
   }
 
