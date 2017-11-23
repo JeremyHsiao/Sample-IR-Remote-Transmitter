@@ -15,15 +15,15 @@
 //     
 extern void Initialize_buffer(void);
 
-extern uint8_t uart_input_buffer_empty_status(void);    
-extern uint8_t uart_input_buffer_full_status(void);
-extern uint8_t uart_add_input_buffer(uint8_t input_data);
-extern uint8_t uart_read_input_buffer(void);
+extern uint8_t uart_input_queue_empty_status(void);    
+extern uint8_t uart_input_queue_full_status(void);
+extern uint8_t uart_input_enqueue(uint8_t input_data);
+extern uint8_t uart_input_dequeue(void);
 
-extern uint8_t uart_output_buffer_empty_status(void);
-extern uint8_t uart_output_buffer_full_status(void);
-extern uint8_t uart_add_output_buffer(uint8_t input_data);
-extern uint8_t uart_read_output_buffer(void);
+extern uint8_t uart_output_queue_empty_status(void);
+extern uint8_t uart_output_queue_full_status(void);
+extern uint8_t uart_output_enqueue(uint8_t input_data);
+extern uint8_t uart_output_dequeue(void);
 
 extern uint8_t IR_output_buffer_empty_status(void);
 extern uint8_t IR_output_buffer_full_status(void);

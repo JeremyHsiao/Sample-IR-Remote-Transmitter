@@ -21,9 +21,9 @@ void UART0_IRQHandler(void)
   {
     do 
     {
-      if(!uart_output_buffer_empty_status())
+      if(!uart_output_queue_empty_status())
       {
-        UART0->DAT = uart_read_output_buffer();
+        UART0->DAT = uart_output_dequeue();
       }
       else
       {
@@ -38,9 +38,9 @@ void UART0_IRQHandler(void)
   {  
     while(!(UART0->FIFOSTS & UART_FIFOSTS_RXEMPTY_Msk))
     {
-      if (!uart_input_buffer_full_status())
+      if (!uart_input_queue_full_status())
       {
-        uart_add_input_buffer(UART0->DAT);
+        uart_input_enqueue(UART0->DAT);
       }
       else
       {
@@ -113,14 +113,18 @@ int main(void)
  
     while(1)
     {
-      if(!uart_input_buffer_empty_status())
+      while(!uart_input_queue_empty_status())
       {
-        if(!uart_output_buffer_full_status())   // fill Tx Buffer until either Rx full is empty or Tx buffer is full
+        if(!uart_output_queue_full_status())   // fill Tx Buffer until either Rx full is empty or Tx buffer is full
         {
-          if(uart_add_output_buffer(uart_read_input_buffer()))
-          {
-            UART0->INTEN |= UART_INTEN_THREIEN_Msk;   // Enable Tx interrupt to consume output buffer
-          }
+          uint8_t value;
+          value = uart_input_dequeue();// already check input_queue is not empty in advance
+          uart_output_enqueue(value);  // already check output_queue is not full in advance
+          UART0->INTEN |= UART_INTEN_THREIEN_Msk;   // Enable Tx interrupt to consume output buffer
+        }
+        else
+        {
+          break;
         }
       }
     }                

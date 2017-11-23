@@ -76,7 +76,7 @@ uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
 // IR-pulse-TX Buffer
-#define IR_TX_BUF_SIZE      250
+#define IR_TX_BUF_SIZE      256
 uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
 uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
@@ -97,17 +97,17 @@ void Initialize_buffer(void)
 // buffer function for UART-Input
 //
 
-uint8_t uart_input_buffer_empty_status(void)
+uint8_t uart_input_queue_empty_status(void)
 {
   return (UART_BUF_RX_WRITE_PTR==UART_BUF_RX_REAR_PTR)?TRUE:FALSE;
 }
 
-uint8_t uart_input_buffer_full_status(void)
+uint8_t uart_input_queue_full_status(void)
 {
   return (UART_BUF_RX_FULL);
 }
 
-uint8_t uart_add_input_buffer(uint8_t input_data)
+uint8_t uart_input_enqueue(uint8_t input_data)
 {
   if(!UART_BUF_RX_FULL)  // must check a buffer-full status before an "add"
   {
@@ -122,7 +122,7 @@ uint8_t uart_add_input_buffer(uint8_t input_data)
   }
 }
 
-uint8_t uart_read_input_buffer(void)
+uint8_t uart_input_dequeue(void)
 {
   uint8_t   return_value;
 
@@ -139,17 +139,17 @@ uint8_t uart_read_input_buffer(void)
 // buffer function for UART-Output
 //
 
-uint8_t uart_output_buffer_empty_status(void)
+uint8_t uart_output_queue_empty_status(void)
 {
   return (UART_BUF_TX_WRITE_PTR==UART_BUF_TX_REAR_PTR)?TRUE:FALSE;
 }
 
-uint8_t uart_output_buffer_full_status(void)
+uint8_t uart_output_queue_full_status(void)
 {
   return (UART_BUF_TX_FULL);
 }
 
-uint8_t uart_add_output_buffer(uint8_t input_data)
+uint8_t uart_output_enqueue(uint8_t input_data)
 {
   if(!UART_BUF_TX_FULL)  // must check a buffer-full status before an "add"
   {
@@ -164,7 +164,7 @@ uint8_t uart_add_output_buffer(uint8_t input_data)
   }
 }
 
-uint8_t uart_read_output_buffer(void)
+uint8_t uart_output_dequeue(void)
 {
   uint8_t   return_value;
 
