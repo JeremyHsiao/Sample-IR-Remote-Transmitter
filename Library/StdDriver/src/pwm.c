@@ -110,78 +110,106 @@ uint32_t PWM_ConfigCaptureChannel(PWM_T *pwm,
  * @note Since every two channels, (0 & 1), (2 & 3), shares a prescaler. Call this API to configure PWM frequency may affect
  *       existing frequency of other channel.
  */
-uint32_t PWM_ConfigOutputChannel(PWM_T *pwm,
-                                 uint32_t u32ChannelNum,
-                                 uint32_t u32Frequency,
-                                 uint32_t u32DutyCycle)
+//uint32_t PWM_ConfigOutputChannel(PWM_T *pwm,
+//                                 uint32_t u32ChannelNum,
+//                                 uint32_t u32Frequency,
+//                                 uint32_t u32DutyCycle)
+//{
+//    uint32_t u32Src = 0;
+//    uint32_t u32PWMClockSrc;
+//    uint32_t u32PWMClkTbl[4] = {__LIRC, __LXT, 0, __HIRC};
+//    uint32_t i;
+//    uint8_t  u8Divider = 1, u8Prescale = 0xFF;
+//    /* this table is mapping divider value to register configuration */
+//    uint32_t u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
+//    uint16_t u16CNR = 0xFFFF;
+
+//    if(pwm == PWM0)
+//        u32Src = (CLK->CLKSEL1 & (CLK_CLKSEL1_PWM0CH01CKSEL_Msk << (u32ChannelNum >> 1))) >> (CLK_CLKSEL1_PWM0CH01CKSEL_Pos << (u32ChannelNum >> 1));
+
+//    if(u32Src == 2)
+//    {
+//        SystemCoreClockUpdate();
+//        u32PWMClockSrc = CLK_GetHCLKFreq();
+//    }
+//    else
+//    {
+//        u32PWMClockSrc = u32PWMClkTbl[u32Src];
+//    }
+
+//    for(; u8Divider < 17; u8Divider <<= 1)    // clk divider could only be 1, 2, 4, 8, 16
+//    {
+//        i = (u32PWMClockSrc / u32Frequency) / u8Divider;
+//        // If target value is larger than CNR * prescale, need to use a larger divider
+//        if(i > (0x10000 * 0x100))
+//            continue;
+
+//        // CNR = 0xFFFF + 1, get a prescaler that CNR value is below 0xFFFF
+//        u8Prescale = (i + 0xFFFF) / 0x10000;
+
+//        // u8Prescale must at least be 2, otherwise the output stop
+//        if(u8Prescale < 3)
+//            u8Prescale = 2;
+
+//        i /= u8Prescale;
+
+//        if(i <= 0x10000)
+//        {
+//            if(i == 1)
+//                u16CNR = 1;     // Too fast, and PWM cannot generate expected frequency...
+//            else
+//                u16CNR = i;
+//            break;
+//        }
+//    }
+//    // Store return value here 'cos we're gonna change u8Divider & u8Prescale & u16CNR to the real value to fill into register
+//    i = u32PWMClockSrc / (u8Prescale * u8Divider * u16CNR);
+
+//    u8Prescale -= 1;
+//    u16CNR -= 1;
+//    // convert to real register value
+//    u8Divider = u32PWMDividerToRegTbl[u8Divider];
+
+//    // every two channels share a prescaler
+//    (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | (u8Prescale << ((u32ChannelNum >> 1) * 8));
+//    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u8Divider << (4 * u32ChannelNum));
+//    // set PWM to edge aligned type
+//    //(pwm)->CTL &= ~(PWM_PCR_PWM01TYPE_Msk << (u32ChannelNum >> 1));
+//    (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+//    *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = u32DutyCycle * (u16CNR + 1) / 100 - 1;
+//    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = u16CNR;
+
+//    return(i);
+//}
+
+void PWM_ConfigOutputChannel(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32Frequency, uint32_t u32DutyCycle)
 {
-    uint32_t u32Src = 0;
-    uint32_t u32PWMClockSrc;
-    uint32_t u32PWMClkTbl[4] = {__LIRC, __LXT, 0, __HIRC};
-    uint32_t i;
-    uint8_t  u8Divider = 1, u8Prescale = 0xFF;
     /* this table is mapping divider value to register configuration */
-    uint32_t u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
-    uint16_t u16CNR = 0xFFFF;
-
-    if(pwm == PWM0)
-        u32Src = (CLK->CLKSEL1 & (CLK_CLKSEL1_PWM0CH01CKSEL_Msk << (u32ChannelNum >> 1))) >> (CLK_CLKSEL1_PWM0CH01CKSEL_Pos << (u32ChannelNum >> 1));
-
-    if(u32Src == 2)
-    {
-        SystemCoreClockUpdate();
-        u32PWMClockSrc = CLK_GetHCLKFreq();
-    }
-    else
-    {
-        u32PWMClockSrc = u32PWMClkTbl[u32Src];
-    }
-
-    for(; u8Divider < 17; u8Divider <<= 1)    // clk divider could only be 1, 2, 4, 8, 16
-    {
-        i = (u32PWMClockSrc / u32Frequency) / u8Divider;
-        // If target value is larger than CNR * prescale, need to use a larger divider
-        if(i > (0x10000 * 0x100))
-            continue;
-
-        // CNR = 0xFFFF + 1, get a prescaler that CNR value is below 0xFFFF
-        u8Prescale = (i + 0xFFFF) / 0x10000;
-
-        // u8Prescale must at least be 2, otherwise the output stop
-        if(u8Prescale < 3)
-            u8Prescale = 2;
-
-        i /= u8Prescale;
-
-        if(i <= 0x10000)
-        {
-            if(i == 1)
-                u16CNR = 1;     // Too fast, and PWM cannot generate expected frequency...
-            else
-                u16CNR = i;
-            break;
-        }
-    }
-    // Store return value here 'cos we're gonna change u8Divider & u8Prescale & u16CNR to the real value to fill into register
-    i = u32PWMClockSrc / (u8Prescale * u8Divider * u16CNR);
-
-    u8Prescale -= 1;
-    u16CNR -= 1;
-    // convert to real register value
-    u8Divider = u32PWMDividerToRegTbl[u8Divider];
-
+    const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
+    #define  u32PWMClockSrc (48000000)
+    #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
+    #define  u8Prescale     (24)         // Can be 2~256
+    #define  u16CNR         (((u32PWMClockSrc / u32Frequency) / u8Divider ) / u8Prescale)      
+        
     // every two channels share a prescaler
-    (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | (u8Prescale << ((u32ChannelNum >> 1) * 8));
-    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u8Divider << (4 * u32ChannelNum));
-    // set PWM to edge aligned type
-    //(pwm)->CTL &= ~(PWM_PCR_PWM01TYPE_Msk << (u32ChannelNum >> 1));
+    (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | ((u8Prescale-1) << ((u32ChannelNum >> 1) * 8));   // pre-scaler must -1
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u32PWMDividerToRegTbl[u8Divider] << (4 * u32ChannelNum));// LUT for divider
+    // Setup auto-reload mode
     (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+    // load value    
     *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = u32DutyCycle * (u16CNR + 1) / 100 - 1;
     *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = u16CNR;
-
-    return(i);
+    //return(u32PWMClockSrc / (u8Prescale * u8Divider * u16CNR)); // return estimated PWM frequency
 }
 
+void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint32_t u32DutyCycle)
+{
+    // Setup auto-reload mode
+    (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+    // load value    
+    *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = u32DutyCycle * (width + 1) / 100 - 1;
+    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = width;
+}
 
 /**
  * @brief Start PWM module

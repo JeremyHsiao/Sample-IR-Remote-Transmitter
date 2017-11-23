@@ -32,7 +32,14 @@ void SYS_Init(void)
 
     /* Enable IP clock */
     CLK_EnableModuleClock(UART_MODULE);
+    CLK_EnableModuleClock(PWM0_MODULE);
 
+    /* Select PWM module clock source */
+    CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
+
+    /* Reset PWM0 channel0~channel3 */
+    SYS_ResetModule(PWM0_RST);
+    
     /* Update System Core Clock */
     /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
     SystemCoreClockUpdate();
@@ -44,7 +51,11 @@ void SYS_Init(void)
 	  SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA8MFP_Msk) ) | SYS_GPA_MFP_PA8MFP_UART_TX;
 	  SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA9MFP_Msk) ) | SYS_GPA_MFP_PA9MFP_UART_RX;
 
-    /* Lock protected registers */
+    /* Set GPA multi-function pins for PWM0 Channel0 */
+      SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
+	  SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_PWM0CH0_INV;
+
+/* Lock protected registers */
     SYS_LockReg();
 }
 
@@ -62,13 +73,22 @@ int main(void)
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
 
-    printf("\n+------------------------------------------------------------------------+\n");
-    printf(  "|                      Welcome to My IR Transmitter                      |\n");
-    printf(  "+------------------------------------------------------------------------+\n");
+    printf("\n+------------------------------+\n");
+    printf(  "| Welcome to My IR Transmitter |\n");
+    printf(  "+------------------------------\n");
 	
     Initialize_buffer();
 	IR_Repeat_Cnt = 0;
- 
+
+    /* set PWM0 channel 0 output configuration */
+    PWM_ConfigOutputChannel(PWM0, PWM_CH0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
+        
+    /* Enable PWM Output path for PWM0 channel 0 */
+    PWM_EnableOutput(PWM0, 0x1);
+
+    // Start
+    PWM_Start(PWM0, 0x1);
+
     while(1)
     {
         while(!uart_input_queue_empty_status())

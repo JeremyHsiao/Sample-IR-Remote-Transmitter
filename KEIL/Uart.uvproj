@@ -479,6 +479,11 @@
               <FileType>1</FileType>
               <FilePath>..\Library\StdDriver\src\sys.c</FilePath>
             </File>
+            <File>
+              <FileName>pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Library\StdDriver\src\pwm.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

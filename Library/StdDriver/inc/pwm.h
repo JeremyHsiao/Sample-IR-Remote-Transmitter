@@ -157,10 +157,17 @@ uint32_t PWM_ConfigCaptureChannel(PWM_T *pwm,
                                   uint32_t u32ChannelNum,
                                   uint32_t u32UnitTimeNsec,
                                   uint32_t u32CaptureEdge);
-uint32_t PWM_ConfigOutputChannel(PWM_T *pwm,
+//uint32_t PWM_ConfigOutputChannel(PWM_T *pwm,
+//                                 uint32_t u32ChannelNum,
+//                                 uint32_t u32Frequncy,
+//                                 uint32_t u32DutyCycle);
+void PWM_ConfigOutputChannel(PWM_T *pwm,
                                  uint32_t u32ChannelNum,
                                  uint32_t u32Frequncy,
                                  uint32_t u32DutyCycle);
+
+void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint32_t u32DutyCycle);
+                                 
 void PWM_Start(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_Stop(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_ForceStop(PWM_T *pwm, uint32_t u32ChannelMask);
