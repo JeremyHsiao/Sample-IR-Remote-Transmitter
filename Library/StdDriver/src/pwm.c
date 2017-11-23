@@ -186,16 +186,17 @@ void PWM_ConfigOutputChannel(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32Fre
 {
     /* this table is mapping divider value to register configuration */
     const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
-    #define  u32PWMClockSrc (48000000)
+    #define  u32PWMClockSrc (48000000)  // Here we will set to 1us per count (48MHz/48)
     #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
-    #define  u8Prescale     (24)         // Can be 2~256
-    #define  u16CNR         (((u32PWMClockSrc / u32Frequency) / u8Divider ) / u8Prescale)      
+    #define  u8Prescale     (48)        // Can be 2~256
+    uint16_t u16CNR;            
         
     // every two channels share a prescaler
     (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | ((u8Prescale-1) << ((u32ChannelNum >> 1) * 8));   // pre-scaler must -1
     (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u32PWMDividerToRegTbl[u8Divider] << (4 * u32ChannelNum));// LUT for divider
     // Setup auto-reload mode
     (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+    u16CNR = (((u32PWMClockSrc/u8Divider)/u8Prescale)/u32Frequency);   
     // load value    
     *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = u32DutyCycle * (u16CNR + 1) / 100 - 1;
     *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = u16CNR;

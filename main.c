@@ -16,6 +16,13 @@
 #include "uart_app.h"
 #include "parser.h"
 
+void PWM0_IRQHandler(void)
+{
+	
+    // Clear channel 0 period interrupt flag
+    PWM_ClearIntFlag(PWM0, 0);
+}
+
 void SYS_Init(void)
 {
     /*---------------------------------------------------------------------------------------------------------*/
@@ -85,9 +92,10 @@ int main(void)
         
     /* Enable PWM Output path for PWM0 channel 0 */
     PWM_EnableOutput(PWM0, 0x1);
-
-    // Start
-    PWM_Start(PWM0, 0x1);
+    
+    // Enable PWM channel 0 period interrupt
+    //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
+    NVIC_EnableIRQ(PWM0_IRQn);
 
     while(1)
     {
@@ -131,6 +139,8 @@ int main(void)
                             // Wait until previous Tx Finish -- to be implemented
                             PWM_period = Next_PWM_Period_Get();
                             PWM_duty_cycle = Next_DutyCycle_Period_Get();
+                            PWM_SetOutputPulse(PWM0, PWM_CH0, PWM_period, PWM_duty_cycle);
+                            PWM_Start(PWM0, 0x1);
                             //IR_Transmit_Buffer_StartSend();
                             Clear_CMD_Status();
                             // Debug message
