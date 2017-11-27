@@ -29,8 +29,7 @@ extern uint8_t uart_output_dequeue(void);
 
 extern void IR_output_restart_write_pointer(void);
 extern void IR_output_restart_read_pointer(void);
-extern uint8_t IR_output_queue_empty_status(void);
-extern uint8_t IR_output_array_full_status(void);
+extern uint8_t IR_output_end_of_data(void);
 extern uint8_t IR_output_add(uint32_t input_data);
 extern uint8_t IR_output_read(uint32_t *return_value_ptr);
 

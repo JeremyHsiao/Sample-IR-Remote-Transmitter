@@ -15,6 +15,7 @@
 #include "buffer.h"
 #include "uart_app.h"
 #include "parser.h"
+#include "timer_app.h"
 
 void PWM0_IRQHandler(void)
 {
@@ -40,9 +41,11 @@ void SYS_Init(void)
     /* Enable IP clock */
     CLK_EnableModuleClock(UART_MODULE);
     CLK_EnableModuleClock(PWM0_MODULE);
+    CLK_EnableModuleClock(TMR0_MODULE);
 
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
+    CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
 
     /* Reset PWM0 channel0~channel3 */
     SYS_ResetModule(PWM0_RST);
@@ -62,61 +65,23 @@ void SYS_Init(void)
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_PWM0CH0_INV;
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB7MFP_Msk) ) | SYS_GPB_MFP_PB7MFP_GPIO;
+    
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB3MFP_Msk) ) | SYS_GPB_MFP_PB3MFP_GPIO;
       
     /* Lock protected registers */
     SYS_LockReg();
 }
 
-/* Main */
-int main(void)
+void ProcessInputCommand(void)
 {
-	uint32_t    IR_Repeat_Cnt;
- 	uint32_t	PWM_period =  (uint32_t) (480000/(38000));		// For 38KHz PWM pulse
- 	uint32_t	PWM_duty_cycle = 50;
-
-    /* Init System, IP clock and multi-function I/O */
-    SYS_Init();
-    UART_init();
-
-    /* Init UART to 115200-8n1 for print message */
-    UART_Open(UART0, 115200);
-
-    printf("\n+------------------------------+\n");
-    printf(  "| Welcome to My IR Transmitter |\n");
-    printf(  "+------------------------------\n");
-	
-    Initialize_buffer();
-	IR_Repeat_Cnt = 0;
-
-    GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
-    
-    /* set PWM0 channel 0 output configuration */
-    PWM_ConfigOutputChannel(PWM0, PWM_CH0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
-        
-    /* Enable PWM Output path for PWM0 channel 0 */
-    PWM_EnableOutput(PWM0, 0x1);
-    
-    // Enable PWM channel 0 period interrupt
-    //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
-    NVIC_EnableIRQ(PWM0_IRQn);
-
-    while(1)
-    {
-        while(!uart_input_queue_empty_status())
-        {
-            uint8_t     input_char;
-            input_char = uart_input_dequeue();
-            ProcessInputChar(input_char);
-
-            if(CheckSum_Ready()==true)
-            {
                 if (Read_CheckSum()==0)
                 {
                     switch(Read_CMD_Status())
                     {
                         case ENUM_CMD_STOP_CMD_RECEIVED:
-                            IR_Repeat_Cnt=0;
+                            Set_IR_Repeat_Cnt(0);
                             Clear_CMD_Status();
+                            while(!IR_output_end_of_data()) {}
                             // Wait until previous Tx Finish -- to be implemented
                             Init_ProcessInputChar_State();
                             IR_output_restart_read_pointer();
@@ -128,7 +93,7 @@ int main(void)
                             break;
 
                         case ENUM_CMD_REPEAT_COUNT_RECEIVED:
-                            IR_Repeat_Cnt += Next_Repeat_Count_Get();
+                            Set_IR_Repeat_Cnt(Get_IR_Repeat_Cnt()+Next_Repeat_Count_Get());
                             Next_Repeat_Count_Set(0);
                             Clear_CMD_Status();
                             // Debug message
@@ -140,11 +105,10 @@ int main(void)
 
                         case ENUM_CMD_WIDTH_DATA_READY:
                             // Wait until previous Tx Finish -- to be implemented
-                            PWM_period = Next_PWM_Period_Get();
-                            PWM_duty_cycle = Next_DutyCycle_Period_Get();
-                            PWM_SetOutputPulse(PWM0, PWM_CH0, PWM_period, PWM_duty_cycle);
-                            PWM_Start(PWM0, 0x1);
-                            //IR_Transmit_Buffer_StartSend();
+                            Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
+                            Set_PWM_period(Next_PWM_Period_Get());
+                            Set_PWM_duty_cycle(Next_DutyCycle_Period_Get());
+                            IR_Transmit_Buffer_StartSend();
                             Clear_CMD_Status();
                             // Debug message
                             {
@@ -175,10 +139,55 @@ int main(void)
                     }
                 }
                 Reset_CheckSum();
-                }
-            }
-        
+}
 
+/* Main */
+int main(void)
+{
+    /* Init System, IP clock and multi-function I/O */
+    SYS_Init();
+    UART_init();
+
+    /* Init UART to 115200-8n1 for print message */
+    UART_Open(UART0, 115200);
+
+    printf("\n+------------------------------+\n");
+    printf(  "| Welcome to My IR Transmitter |\n");
+    printf(  "+------------------------------\n");
+	
+    Initialize_buffer();
+	Set_IR_Repeat_Cnt(0);
+
+    GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
+    
+    GPIO_SetMode(PB, BIT3, GPIO_MODE_OUTPUT);
+    
+    /* set PWM0 channel 0 output configuration */
+    PWM_ConfigOutputChannel(PWM0, PWM_CH0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
+        
+    /* Enable PWM Output path for PWM0 channel 0 */
+    PWM_EnableOutput(PWM0, 0x1);
+    
+    // Enable PWM channel 0 period interrupt
+    //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
+    NVIC_EnableIRQ(PWM0_IRQn);
+    NVIC_EnableIRQ(TMR0_IRQn);	
+    Timer_Init();    
+    
+    while(1)
+    {
+        while(!uart_input_queue_empty_status())
+        {
+            uint8_t     input_char;
+            input_char = uart_input_dequeue();
+            ProcessInputChar(input_char);
+
+            if(CheckSum_Ready()==true)
+            {
+                ProcessInputCommand();
+            }
+        }
+    }
         
 /*        
       // For testing UART Rx-Tx: read then write        
@@ -197,7 +206,5 @@ int main(void)
         }
       }
 */
-    }                
-  }
-
+}
 

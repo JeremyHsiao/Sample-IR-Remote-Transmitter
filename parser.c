@@ -180,7 +180,6 @@ void ProcessInputChar(uint8_t input_byte)
             {
             	Next_PWM_Period_Set(temp_buf);
             }
-            //temp_level = 1;									// First pulse is always 1 pulse
             IR_output_restart_write_pointer();
             next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_1ST_INPUT;	// Go to wait pulse
             break;

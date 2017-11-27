@@ -191,6 +191,11 @@ void IR_output_restart_read_pointer(void)
   IR_BUF_TX_REAR_PTR = u32Buffer_IR_TX_Width;
 }
 
+uint8_t IR_output_end_of_data(void)
+{
+    return (IR_BUF_TX_REAR_PTR==IR_BUF_TX_WRITE_PTR)? TRUE: FALSE;
+}
+
 uint8_t IR_output_add(uint32_t input_data)
 {
   if(IR_BUF_TX_WRITE_PTR<(u32Buffer_IR_TX_Width+IR_TX_BUF_SIZE))  // must check a buffer-full status before an "add"
