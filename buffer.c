@@ -107,6 +107,9 @@ uint8_t uart_input_queue_full_status(void)
   return (UART_BUF_RX_FULL);
 }
 
+//
+// This function is currently only used in UART Rx-interrupt
+//
 uint8_t uart_input_enqueue(uint8_t input_data)
 {
   if(!UART_BUF_RX_FULL)  // must check a buffer-full status before an "add"
@@ -130,7 +133,9 @@ uint8_t uart_input_dequeue(void)
   if(!(UART_BUF_RX_WRITE_PTR==UART_BUF_RX_REAR_PTR))
   {
     BUF_PTR_INCREASE(UART_BUF_RX_REAR_PTR,u8Buffer_RX,UART_RX_BUF_SIZE);
-    UART_BUF_RX_FULL = FALSE; // Clear buffer-full at the end of a "read"
+    UART0->INTEN &= ~UART_INTEN_RDAIEN_Msk; // update buffer-full status in the block where UART-RX interrupt is diaabled temporarily.sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+    BUF_FULL_CHECK(UART_BUF_RX_WRITE_PTR,UART_BUF_RX_REAR_PTR,UART_RX_BUF_SIZE,UART_BUF_RX_FULL);  
+    UART0->INTEN |= UART_INTEN_RDAIEN_Msk;
   }
   return return_value;
 }
@@ -155,16 +160,39 @@ uint8_t uart_output_enqueue(uint8_t input_data)
   {
     *UART_BUF_TX_WRITE_PTR = input_data;
     BUF_PTR_INCREASE(UART_BUF_TX_WRITE_PTR,u8Buffer_TX,UART_TX_BUF_SIZE);
+    UART0->INTEN &= ~UART_INTEN_THREIEN_Msk;   // update buffer-full status in the block where UART-TX interrupt is diaabled temporarily.  
     BUF_FULL_CHECK(UART_BUF_TX_WRITE_PTR,UART_BUF_TX_REAR_PTR,UART_TX_BUF_SIZE, UART_BUF_TX_FULL); // always update buffer-full status at the end of an "add"
     UART0->INTEN |= UART_INTEN_THREIEN_Msk;   // Enable Tx interrupt to consume output buffer  
-    return TRUE;
+    return 1;
   }
   else
   {
-    return FALSE;
+    return 0;
   }
 }
 
+uint8_t uart_output_enqueue_with_newline (uint8_t input_data)
+{
+    if(uart_output_enqueue(input_data))
+    {
+        if(uart_output_enqueue('\n'))
+        {
+            return (2);
+        }
+        else
+        {
+            return (1);
+        }
+    }
+    else
+    {
+        return(0);
+    }
+}
+
+//
+// This function is currently only used in UART Tx-interrupt
+//
 uint8_t uart_output_dequeue(void)
 {
   uint8_t   return_value;

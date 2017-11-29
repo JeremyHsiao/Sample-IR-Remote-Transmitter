@@ -134,9 +134,12 @@ void ProcessInputChar(uint8_t input_byte)
 				}
 				else
 				{
-					Next_Repeat_Count_Set(input_byte);
-					current_cmd_status = ENUM_CMD_RECEIVING;
-					next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
+                    if(input_byte<=10)
+                    {
+                        Next_Repeat_Count_Set(input_byte);
+                        current_cmd_status = ENUM_CMD_RECEIVING;
+                        next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
+                    }
 				}
 			}
             break;

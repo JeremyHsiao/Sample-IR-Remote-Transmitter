@@ -11,6 +11,10 @@
 #define _TIMER_APP_H_
 
 extern void 		IR_Transmit_Buffer_StartSend(void);
+extern uint8_t      Get_IR_Tx_running_status(void);
+
+extern void         Clear_IR_Tx_Finish(void);
+extern uint8_t      Get_IR_Tx_Finish_status(void);
 
 extern uint32_t     Get_IR_Repeat_Cnt(void);
 extern void         Set_IR_Repeat_Cnt(uint32_t cnt);

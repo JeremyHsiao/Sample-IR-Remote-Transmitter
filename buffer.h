@@ -25,6 +25,7 @@ extern uint8_t uart_input_dequeue(void);
 extern uint8_t uart_output_queue_empty_status(void);
 extern uint8_t uart_output_queue_full_status(void);
 extern uint8_t uart_output_enqueue(uint8_t input_data);
+extern uint8_t uart_output_enqueue_with_newline(uint8_t input_data);
 extern uint8_t uart_output_dequeue(void);
 
 extern void IR_output_restart_write_pointer(void);

@@ -20,6 +20,7 @@
 #define     WIDTH_TIMER     (TIMER0)
 
 uint8_t	    IR_Transmitter_Running;
+uint8_t	    IR_Finish_Tx_one_RC;
 uint32_t    IR_Repeat_Cnt;
 uint32_t	PWM_period =  (uint32_t) (1000000/(38000));		// For 38KHz PWM pulse
 uint32_t	PWM_duty_cycle = 33;
@@ -33,6 +34,21 @@ uint32_t    Get_PWM_duty_cycle(void) { return PWM_duty_cycle; }
 void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycle; }
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
+
+uint8_t Get_IR_Tx_running_status(void)
+{
+    return IR_Transmitter_Running;
+}
+
+void Clear_IR_Tx_Finish(void)
+{
+    IR_Finish_Tx_one_RC = 0;
+}
+
+uint8_t Get_IR_Tx_Finish_status(void)
+{
+    return IR_Finish_Tx_one_RC;
+}
 
 void Restart_IR_Pulse(void)
 {
@@ -107,12 +123,13 @@ void TMR0_IRQHandler(void)
         else
         {
             // No more data
+            IR_Transmitter_Running = 0;
             PWM_Stop(PWM0, 0x1);
             TIMER_Stop(WIDTH_TIMER);
             TIMER_DisableInt(WIDTH_TIMER);
             Restart_IR_Pulse();
-            IR_Transmitter_Running = 0;
         }
+        IR_Finish_Tx_one_RC = 1;
     }
     TIMER_ClearIntFlag(WIDTH_TIMER);	
 }
@@ -144,8 +161,7 @@ void IR_Transmit_Buffer_StartSend(void)
 	}
 	else
 	{
-		// printf("Nothing to send\r\n");
-		// Nothing to send
+        uart_output_enqueue_with_newline('e');       // empty Tx buffer
 	}
 }
 
