@@ -91,8 +91,8 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_REPEAT_COUNT_RECEIVED:
-            uart_output_enqueue_with_newline((++repeat_cnt!=0)?('0'+repeat_cnt-1):'B');
             repeat_cnt = Next_Repeat_Count_Get();
+            uart_output_enqueue_with_newline((repeat_cnt!=0)?('0'+repeat_cnt-1):'B');
             Next_Repeat_Count_Set(0);
             if(repeat_cnt--)
             {
