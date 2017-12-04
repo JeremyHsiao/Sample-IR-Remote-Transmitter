@@ -382,7 +382,7 @@ void ProcessInputChar(uint8_t input_byte)
 //        
          case ENUM_PARSING_STATE_WAIT_DATA_BYTE:
         	Internal_CheckSum ^= input_byte;
-			temp_buf = input_byte;
+            Next_input_parameter = input_byte;
             next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;		        // wait for checksum
             current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
             break;
@@ -390,7 +390,7 @@ void ProcessInputChar(uint8_t input_byte)
         case ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH:
         	Internal_CheckSum ^= input_byte;
 			temp_buf = input_byte;
-            next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_WORD_LOW; // wait for 2nd byte data
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_WORD_LOW; // wait for 2nd byte data
             break;
 
         case ENUM_PARSING_STATE_WAIT_DATA_WORD_LOW:
@@ -415,7 +415,7 @@ void ProcessInputChar(uint8_t input_byte)
         case ENUM_PARSING_STATE_WAIT_DATA_DWORD_3RD:
         	Internal_CheckSum ^= input_byte;
             temp_buf = (temp_buf<<8) + input_byte;
-            next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_LONG_4TH; // wait for 4th byte data
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_4TH; // wait for 4th byte data
             break;
 
         case ENUM_PARSING_STATE_WAIT_DATA_DWORD_4TH:
