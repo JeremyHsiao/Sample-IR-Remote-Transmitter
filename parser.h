@@ -37,5 +37,7 @@ extern void Next_PWM_Period_Set(uint32_t new_period);
 extern uint32_t Next_PWM_Period_Get(void);
 extern void Next_PWM_DutyCycle_Set(uint8_t new_duty_cycle);
 extern uint8_t Next_DutyCycle_Period_Get(void);
+extern uint8_t Next_Command_Get(void);
+extern uint32_t Next_Input_Parameter_Get(void);
 
 #endif /* !_PARSER_H_ */

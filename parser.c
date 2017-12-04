@@ -24,6 +24,15 @@ typedef enum {
     ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_LONG_4TH,
     ENUM_PARSING_STATE_WAIT_CHECKSUM,
     ENUM_PARSING_STATE_UNKNOWN_STATE,
+    ENUM_PARSING_STATE_WAIT_DATA_BYTE,
+    ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH,
+    ENUM_PARSING_STATE_WAIT_DATA_WORD_LOW,
+    ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST,
+    ENUM_PARSING_STATE_WAIT_DATA_DWORD_2ND,
+    ENUM_PARSING_STATE_WAIT_DATA_DWORD_3RD,
+    ENUM_PARSING_STATE_WAIT_DATA_DWORD_4TH,
+    ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM,
+    ENUM_PARSING_STATE_UNKNOWN_STATE_INPUT,
     ENUM_PARSING_STATE_MAX
 }   ENUM_PARSING_STATE;
 
@@ -36,6 +45,8 @@ static uint8_t				Next_Repeat_Count;
 static ENUM_PARSING_STATE	current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE; // Initial State
 static ENUM_CMD_STATUS		current_cmd_status = ENUM_CMD_IDLE;
 static Bool					CheckSum_Read = false;
+static uint8_t              Next_Command;
+static uint32_t             Next_input_parameter;
 
 Bool CheckSum_Ready(void)
 {
@@ -93,6 +104,16 @@ uint8_t Next_DutyCycle_Period_Get(void)
 	return Next_PWM_duty_cycle;
 }
 
+uint8_t Next_Command_Get(void)
+{
+    return Next_Command;
+}
+    
+uint32_t Next_Input_Parameter_Get(void)
+{
+    return Next_input_parameter;
+}
+    
 void Init_ProcessInputChar_State(void)
 {
 	current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;
@@ -127,21 +148,104 @@ void ProcessInputChar(uint8_t input_byte)
 			{
 				Internal_CheckSum = input_byte;
 				CheckSum_Read = false;
-				if (input_byte == 0xfe)										// Define as STOP-TX - end-of-packet
-				{
-					current_cmd_status = ENUM_CMD_STOP_CMD_RECEIVED;		// Stop Tx CMD
-					next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
-				}
-				else
-				{
-                    if(input_byte<=20)
-                    {
+                switch (input_byte)
+                {
+                    case 0xfe: // Stop Tx CMD
+                        Next_Command = input_byte;
+                        current_cmd_status = ENUM_CMD_STOP_CMD_RECEIVED;		
+                        next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
+                        break;
+                    // Other single byte CMD so next data is checksum - for future extension
+                    case 0xfd:
+                    case 0xfc:
+                    case 0xfb:
+                    case 0xfa:
+                    case 0xf9:
+                    case 0xf8:
+                    case 0xf7:
+                    case 0xf6:
+                    case 0xf5:
+                    case 0xf4:
+                    case 0xf3:
+                    case 0xf2:
+                    case 0xf1:
+                    case 0xf0:
+                        Next_Command = input_byte;
+                        current_cmd_status = ENUM_CMD_RECEIVING;
+                        next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
+                        break;
+                    // 1-byte data CMD so next data is byte data - for future extension
+                    case 0xef:
+                    case 0xee:
+                    case 0xed:
+                    case 0xec:
+                    case 0xeb:
+                    case 0xea:
+                    case 0xe9:
+                    case 0xe8:
+                    case 0xe7:
+                    case 0xe6:
+                    case 0xe5:
+                    case 0xe4:
+                    case 0xe3:
+                    case 0xe2:
+                    case 0xe1:
+                    case 0xe0:
+                        Next_Command = input_byte;
+                        current_cmd_status = ENUM_CMD_RECEIVING;
+                        next_state = ENUM_PARSING_STATE_WAIT_DATA_BYTE;
+                        break;
+                    // 2-byte data CMD so next data is high-byte of word data - for future extension
+                    case 0xdf:
+                    case 0xde:
+                    case 0xdd:
+                    case 0xdc:
+                    case 0xdb:
+                    case 0xda:
+                    case 0xd9:
+                    case 0xd8:
+                    case 0xd7:
+                    case 0xd6:
+                    case 0xd5:
+                    case 0xd4:
+                    case 0xd3:
+                    case 0xd2:
+                    case 0xd1:
+                    case 0xd0:
+                        Next_Command = input_byte;
+                        current_cmd_status = ENUM_CMD_RECEIVING;
+                        next_state = ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH;
+                        break;
+                    // 4-byte data CMD so next data is 1st (highest) byte of DWORD data - for future extension
+                    case 0xcf:
+                    case 0xce:
+                    case 0xcd:
+                    case 0xcc:
+                    case 0xcb:
+                    case 0xca:
+                    case 0xc9:
+                    case 0xc8:
+                    case 0xc7:
+                    case 0xc6:
+                    case 0xc5:
+                    case 0xc4:
+                    case 0xc3:
+                    case 0xc2:
+                    case 0xc1:
+                    case 0xc0:
+                        Next_Command = input_byte;
+                        current_cmd_status = ENUM_CMD_RECEIVING;
+                        next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST;
+                        break;
+                    // Other smaller value is treated as repreat count.
+                    default:
+                        Next_Command = input_byte;
                         Next_Repeat_Count_Set(input_byte);
                         current_cmd_status = ENUM_CMD_RECEIVING;
                         next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
-                    }
-				}
-			}
+                        break;
+                }
+ 			}
             break;
 
         case ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE:
@@ -255,6 +359,7 @@ void ProcessInputChar(uint8_t input_byte)
             //END
 
         case ENUM_PARSING_STATE_UNKNOWN_STATE:
+        case ENUM_PARSING_STATE_UNKNOWN_STATE_INPUT:
             if(input_byte==0xff)
             {
                 next_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;		// at least 0xffff to be sure
@@ -266,6 +371,57 @@ void ProcessInputChar(uint8_t input_byte)
                 current_cmd_status = ENUM_CMD_UNKNOWN;
             }
             break;
+//
+// Get input parameter
+//        
+         case ENUM_PARSING_STATE_WAIT_DATA_BYTE:
+        	Internal_CheckSum ^= input_byte;
+			temp_buf = input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;		        // wait for checksum
+            break;
+
+        case ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH:
+        	Internal_CheckSum ^= input_byte;
+			temp_buf = input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_WORD_LOW; // wait for 2nd byte data
+            break;
+
+        case ENUM_PARSING_STATE_WAIT_DATA_WORD_LOW:
+        	Internal_CheckSum ^= input_byte;
+            Next_input_parameter = (temp_buf<<8) + input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;		        // wait for checksum
+            break;
+
+         case ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST:
+        	Internal_CheckSum ^= input_byte;
+			temp_buf = input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_2ND;	        // wait for 2nd byte data
+            break;
+
+       case ENUM_PARSING_STATE_WAIT_DATA_DWORD_2ND:
+        	Internal_CheckSum ^= input_byte;
+       		temp_buf = (temp_buf<<8) + input_byte;
+       		next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_3RD;            // wait for 3rd byte data
+            break;
+
+        case ENUM_PARSING_STATE_WAIT_DATA_DWORD_3RD:
+        	Internal_CheckSum ^= input_byte;
+            temp_buf = (temp_buf<<8) + input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_LONG_4TH; // wait for 4th byte data
+            break;
+
+        case ENUM_PARSING_STATE_WAIT_DATA_DWORD_4TH:
+        	Internal_CheckSum ^= input_byte;
+            Next_input_parameter = (temp_buf<<8) + input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;             // wait for checksum   
+            break;
+
+        case ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM:
+            Internal_CheckSum ^= input_byte;
+            CheckSum_Read = true;
+            next_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;
+            break;
+            //END
 
         default:
             next_state = ENUM_PARSING_STATE_UNKNOWN_STATE;  // Use to catch unknown-unknown situation
