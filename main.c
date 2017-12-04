@@ -108,6 +108,34 @@ void ProcessInputCommand(void)
             }
             Clear_CMD_Status();
             break;
+            
+        case ENUM_CMD_INPUT_CMD_RECEIVED:
+            if(Next_Command_Get()>=0xf0)
+            {
+                uart_output_enqueue_with_newline('U');
+            }
+            else if(Next_Command_Get()>=0xe0)
+            {
+                uart_output_enqueue_with_newline('V');
+            }
+            else if(Next_Command_Get()>=0xd0)
+            {
+                uart_output_enqueue_with_newline('W');
+            }
+            else if(Next_Command_Get()>=0xc0)
+            {
+                uart_output_enqueue_with_newline('Y');
+            }
+            {
+                char    temp_str[12+1];
+                int     temp_index, temp_length;
+                temp_length = itoa_10(Next_Input_Parameter_Get(),temp_str);
+                for (temp_index=0;temp_index<temp_length;temp_index++)
+                    uart_output_enqueue(temp_str[temp_index]);
+                uart_output_enqueue('\n');
+            }
+            Clear_CMD_Status();
+            break;
 
         case ENUM_CMD_WIDTH_DATA_READY:
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
