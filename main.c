@@ -80,20 +80,27 @@ void ProcessInputCommand(void)
         case ENUM_CMD_STOP_CMD_RECEIVED:
             Set_IR_Repeat_Cnt(0);
             Clear_CMD_Status();
-            while(Get_IR_Tx_running_status()) {}
-            // Wait until previous Tx Finish -- to be implemented
+            while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
+            uart_output_enqueue_with_newline('S');
             Init_ProcessInputChar_State();
             IR_output_restart_read_pointer();
-            // Debug message
-            {
-                uart_output_enqueue_with_newline('S');
-            }
             break;
 
         case ENUM_CMD_REPEAT_COUNT_RECEIVED:
             repeat_cnt = Next_Repeat_Count_Get();
-            uart_output_enqueue_with_newline((repeat_cnt!=0)?('0'+repeat_cnt-1):'B');
             Next_Repeat_Count_Set(0);
+            if(repeat_cnt>=16)
+            {
+                uart_output_enqueue_with_newline('>');
+            }
+            else if (repeat_cnt>=10)
+            {
+                uart_output_enqueue_with_newline(repeat_cnt+'a'-10);
+            }
+            else
+            {
+                uart_output_enqueue_with_newline(repeat_cnt+'0');
+            }
             if(repeat_cnt--)
             {
                 Set_IR_Repeat_Cnt(Get_IR_Repeat_Cnt()+repeat_cnt);
@@ -103,15 +110,15 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_WIDTH_DATA_READY:
-            while(Get_IR_Tx_running_status()) {}
+            while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
             Set_PWM_period(Next_PWM_Period_Get());
             Set_PWM_duty_cycle(Next_DutyCycle_Period_Get());
+            uart_output_enqueue_with_newline('R');
             IR_Transmit_Buffer_StartSend();
             Clear_CMD_Status();
             // Debug message
             {
-                uart_output_enqueue_with_newline('A');
             }
             break;
 
@@ -170,7 +177,7 @@ int main(void)
                 }
                 else
                 {
-                    uart_output_enqueue_with_newline('X');       // Checksum error
+                    uart_output_enqueue_with_newline('?');       // Checksum error
                 }
                 Reset_CheckSum();
             }

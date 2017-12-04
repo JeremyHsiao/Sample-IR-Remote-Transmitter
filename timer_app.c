@@ -161,7 +161,7 @@ void IR_Transmit_Buffer_StartSend(void)
 	}
 	else
 	{
-        uart_output_enqueue_with_newline('e');       // empty Tx buffer
+        uart_output_enqueue_with_newline('-');       // empty Tx buffer
 	}
 }
 

@@ -134,7 +134,7 @@ void ProcessInputChar(uint8_t input_byte)
 				}
 				else
 				{
-                    if(input_byte<=10)
+                    if(input_byte<=20)
                     {
                         Next_Repeat_Count_Set(input_byte);
                         current_cmd_status = ENUM_CMD_RECEIVING;
