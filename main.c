@@ -17,11 +17,21 @@
 #include "parser.h"
 #include "timer_app.h"
 
+extern void WDT_MySetup(void);
+extern void WDT_MyClearTimeOutIntFlag(void);
+
 void PWM0_IRQHandler(void)
 {
 	
     // Clear channel 0 period interrupt flag
     PWM_ClearIntFlag(PWM0, 0);
+}
+
+void WDT_IRQHandler(void)
+{
+    Reset_IR_Tx_running_status();
+    // To trap Watch-dog timer when necessary
+    WDT_ClearResetFlag();
 }
 
 void SYS_Init(void)
@@ -42,13 +52,17 @@ void SYS_Init(void)
     CLK_EnableModuleClock(UART_MODULE);
     CLK_EnableModuleClock(PWM0_MODULE);
     CLK_EnableModuleClock(TMR0_MODULE);
-
+    CLK_EnableModuleClock(WDT_MODULE);
+    
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
 
     /* Reset PWM0 channel0~channel3 */
     SYS_ResetModule(PWM0_RST);
+    
+    // Select WDT clock
+    CLK_SetModuleClock(WDT_MODULE,CLK_CLKSEL1_WDTSEL_LIRC,0);
     
     /* Update System Core Clock */
     /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
@@ -191,6 +205,8 @@ int main(void)
     NVIC_EnableIRQ(TMR0_IRQn);	
     Timer_Init();    
     Clear_IR_Tx_Finish();
+    WDT_MySetup();
+    NVIC_EnableIRQ(WDT_IRQn);
     
     while(1)
     {
@@ -218,6 +234,7 @@ int main(void)
             Clear_IR_Tx_Finish();
             uart_output_enqueue_with_newline('+');               // Tx finish one-time
         }
+        WDT_ResetCounter();
     }
         
 /*        

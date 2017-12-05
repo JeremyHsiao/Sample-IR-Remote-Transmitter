@@ -35,6 +35,11 @@ void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycl
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
 
+void Reset_IR_Tx_running_status(void)
+{
+    IR_Transmitter_Running = 0;
+}
+
 uint8_t Get_IR_Tx_running_status(void)
 {
     return IR_Transmitter_Running;

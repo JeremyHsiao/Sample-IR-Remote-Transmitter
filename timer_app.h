@@ -12,6 +12,7 @@
 
 extern void 		IR_Transmit_Buffer_StartSend(void);
 extern uint8_t      Get_IR_Tx_running_status(void);
+extern void         Reset_IR_Tx_running_status(void);
 
 extern void         Clear_IR_Tx_Finish(void);
 extern uint8_t      Get_IR_Tx_Finish_status(void);
