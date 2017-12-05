@@ -116,7 +116,7 @@ void ProcessInputCommand(void)
             {
                 uart_output_enqueue_with_newline(repeat_cnt+'0');
             }
-            if(repeat_cnt--)
+            if(repeat_cnt>0)
             {
                 Set_IR_Repeat_Cnt(Get_IR_Repeat_Cnt()+repeat_cnt);
                 IR_Transmit_Buffer_StartSend();
