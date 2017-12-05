@@ -10,6 +10,7 @@
 #ifndef _TIMER_APP_H_
 #define _TIMER_APP_H_
 
+extern void         Init_Timer_App(void);
 extern void 		IR_Transmit_Buffer_StartSend(void);
 extern uint8_t      Get_IR_Tx_running_status(void);
 extern void         Reset_IR_Tx_running_status(void);

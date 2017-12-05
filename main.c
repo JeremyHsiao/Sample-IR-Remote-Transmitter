@@ -96,7 +96,8 @@ void ProcessInputCommand(void)
             Clear_CMD_Status();
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             uart_output_enqueue_with_newline('S');
-            Init_ProcessInputChar_State();
+            Init_Parser();
+            Init_Timer_App();
             IR_output_restart_read_pointer();
             break;
 
@@ -187,10 +188,10 @@ int main(void)
     printf(  "+------------------------------\n");
 	
     Initialize_buffer();
-	Set_IR_Repeat_Cnt(0);
+    Init_Parser();    
+    Init_Timer_App();
 
     GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
-    
     GPIO_SetMode(PB, BIT3, GPIO_MODE_OUTPUT);
     
     /* set PWM0 channel 0 output configuration */
@@ -198,14 +199,17 @@ int main(void)
         
     /* Enable PWM Output path for PWM0 channel 0 */
     PWM_EnableOutput(PWM0, 0x1);
-    
+
+    // Setup Watch Dog Timer
+    WDT_MySetup();
+
+    // Setup Timer
+    Timer_Init();    
+
     // Enable PWM channel 0 period interrupt
     //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
     NVIC_EnableIRQ(PWM0_IRQn);
     NVIC_EnableIRQ(TMR0_IRQn);	
-    Timer_Init();    
-    Clear_IR_Tx_Finish();
-    WDT_MySetup();
     NVIC_EnableIRQ(WDT_IRQn);
     
     while(1)

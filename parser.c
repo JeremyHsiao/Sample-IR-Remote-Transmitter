@@ -36,17 +36,28 @@ typedef enum {
     ENUM_PARSING_STATE_MAX
 }   ENUM_PARSING_STATE;
 
-static uint32_t				Next_PWM_period = (uint32_t) (48000000/(38000));		// For 38KHz PWM pulse -- To be updated
-static uint32_t				Next_PWM_duty_cycle = 50; // 50%
+static uint32_t				Next_PWM_period;
+static uint32_t				Next_PWM_duty_cycle;
 static uint8_t      		Internal_CheckSum;
 static uint8_t				Next_Repeat_Count;
-//static Bool					Stop_CMD_Received = false;
-//static Bool					IR_Data_Ready =  false;
-static ENUM_PARSING_STATE	current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE; // Initial State
-static ENUM_CMD_STATUS		current_cmd_status = ENUM_CMD_IDLE;
-static Bool					CheckSum_Read = false;
+static ENUM_PARSING_STATE	current_state;
+static ENUM_CMD_STATUS		current_cmd_status;
+static Bool					CheckSum_Read;
 static uint8_t              Next_Command;
 static uint32_t             Next_input_parameter;
+
+void Init_Parser(void)
+{
+    Next_PWM_period = (uint32_t) (48000000/(38000));		// For 38KHz PWM pulse -- To be updated
+    Next_PWM_duty_cycle = 33; // 50%
+    Next_Repeat_Count = 0;
+    Internal_CheckSum = 0xff;
+    current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE; // Initial State
+    current_cmd_status = ENUM_CMD_IDLE;
+    CheckSum_Read = false;
+    Next_Command = 0xfe;
+    Next_input_parameter = 0;
+}
 
 Bool CheckSum_Ready(void)
 {
@@ -114,11 +125,6 @@ uint32_t Next_Input_Parameter_Get(void)
     return Next_input_parameter;
 }
     
-void Init_ProcessInputChar_State(void)
-{
-	current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;
-}
-
 void ProcessInputChar(uint8_t input_byte)
 {
     static uint32_t         		temp_buf = 0;

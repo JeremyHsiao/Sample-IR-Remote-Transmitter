@@ -22,9 +22,9 @@
 uint8_t	    IR_Transmitter_Running;
 uint8_t	    IR_Finish_Tx_one_RC;
 uint32_t    IR_Repeat_Cnt;
-uint32_t	PWM_period =  (uint32_t) (1000000/(38000));		// For 38KHz PWM pulse
-uint32_t	PWM_duty_cycle = 33;
-uint8_t     bLevel = 1;
+uint32_t	PWM_period;
+uint32_t	PWM_duty_cycle;
+uint8_t     bLevel;
 
 uint32_t    Get_IR_Repeat_Cnt(void) { return IR_Repeat_Cnt; }
 void        Set_IR_Repeat_Cnt(uint32_t cnt) { IR_Repeat_Cnt = cnt; }
@@ -34,6 +34,16 @@ uint32_t    Get_PWM_duty_cycle(void) { return PWM_duty_cycle; }
 void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycle; }
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
+
+void Init_Timer_App(void)
+{
+    IR_Transmitter_Running = 0;
+    IR_Finish_Tx_one_RC = 0;
+    IR_Repeat_Cnt = 0;
+    PWM_period =  (uint32_t) (1000000/(38000));		// For 38KHz PWM pulse
+    PWM_duty_cycle = 33;
+    bLevel = 1;
+}
 
 void Reset_IR_Tx_running_status(void)
 {
@@ -124,6 +134,7 @@ void TMR0_IRQHandler(void)
             Setup_IR_PWM_Pulse();
             IR_output_read(&temp_width);
             Timer_SetNextTimeout(WIDTH_TIMER,temp_width);
+            WDT_ResetCounter();
        }
         else
         {
