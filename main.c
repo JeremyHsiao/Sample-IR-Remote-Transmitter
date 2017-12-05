@@ -98,7 +98,7 @@ void ProcessInputCommand(void)
             uart_output_enqueue_with_newline('S');
             Init_Parser();
             Init_Timer_App();
-            IR_output_restart_read_pointer();
+            Init_IR_buffer();
             break;
 
         case ENUM_CMD_REPEAT_COUNT_RECEIVED:
@@ -156,12 +156,13 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_WIDTH_DATA_READY:
+            uart_output_enqueue_with_newline('R');
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
             Set_PWM_period(Next_PWM_Period_Get());
             Set_PWM_duty_cycle(Next_DutyCycle_Period_Get());
-            uart_output_enqueue_with_newline('R');
-            IR_Transmit_Buffer_StartSend();
+            Copy_Input_Data_to_Tx_Data_and_Start();
+            //IR_Transmit_Buffer_StartSend();
             Clear_CMD_Status();
             // Debug message
             {
@@ -201,7 +202,7 @@ int main(void)
     PWM_EnableOutput(PWM0, 0x1);
 
     // Setup Watch Dog Timer
-    WDT_MySetup();
+    //WDT_MySetup();
 
     // Setup Timer
     Timer_Init();    
@@ -210,15 +211,13 @@ int main(void)
     //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
     NVIC_EnableIRQ(PWM0_IRQn);
     NVIC_EnableIRQ(TMR0_IRQn);	
-    NVIC_EnableIRQ(WDT_IRQn);
+    //NVIC_EnableIRQ(WDT_IRQn);
     
     while(1)
     {
         if(!uart_input_queue_empty_status())
         {
-            uint8_t     input_char;
-            input_char = uart_input_dequeue();
-            ProcessInputChar(input_char);
+            ProcessInputChar(uart_input_dequeue());
 
             if(CheckSum_Ready()==true)
             {

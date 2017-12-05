@@ -299,7 +299,7 @@ void ProcessInputChar(uint8_t input_byte)
             {
             	Next_PWM_Period_Set(temp_buf);
             }
-            IR_output_restart_write_pointer();
+            IR_data_restart_write_pointer();
             next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_1ST_INPUT;	// Go to wait pulse
             break;
 
@@ -331,9 +331,7 @@ void ProcessInputChar(uint8_t input_byte)
         case ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_WORD_LOW:
         	Internal_CheckSum ^= input_byte;
             temp_buf = (temp_buf<<8) + input_byte;
-            //IR_Data_Buffer_Push(temp_level,temp_buf);
-            IR_output_add(temp_buf);
-            //temp_level = (temp_level!=0)?0:1;										// reverse pulse level
+            IR_data_add(temp_buf);
             next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_1ST_INPUT;		// back to wait for 1st byte
             break;
         //END
@@ -357,9 +355,7 @@ void ProcessInputChar(uint8_t input_byte)
         	Internal_CheckSum ^= input_byte;
             temp_buf = (temp_buf<<8) + input_byte;
            	temp_buf &= 0x7fffffff; // Remove highest bit here before pushing into queue
-           	//IR_Data_Buffer_Push(temp_level,temp_buf);
-            IR_output_add(temp_buf);
-            //temp_level = (temp_level!=0)?0:1;
+            IR_data_add(temp_buf);
             next_state = ENUM_PARSING_STATE_WAIT_PULSE_WIDTH_WAIT_1ST_INPUT;
             break;
 

@@ -16,6 +16,7 @@
 // External Function declaration
 //     
 extern void Initialize_buffer(void);
+extern void Init_IR_buffer(void);
 
 extern uint8_t uart_input_queue_empty_status(void);    
 extern uint8_t uart_input_queue_full_status(void);
@@ -28,10 +29,15 @@ extern uint8_t uart_output_enqueue(uint8_t input_data);
 extern uint8_t uart_output_enqueue_with_newline(uint8_t input_data);
 extern uint8_t uart_output_dequeue(void);
 
-extern void IR_output_restart_write_pointer(void);
+extern void IR_data_restart_write_pointer(void);
+extern uint8_t IR_data_full(void);
+extern uint8_t IR_data_add(uint32_t input_data);
+extern void Copy_Input_Data_to_Tx_Data_and_Start(void);
+
+
+//extern void IR_output_restart_write_pointer(void);
 extern void IR_output_restart_read_pointer(void);
 extern uint8_t IR_output_end_of_data(void);
-extern uint8_t IR_output_add(uint32_t input_data);
 extern uint8_t IR_output_read(uint32_t *return_value_ptr);
 
 #endif /* !_BUFFER_H_ */

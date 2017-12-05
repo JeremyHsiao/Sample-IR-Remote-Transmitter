@@ -13,10 +13,11 @@
 #include <string.h>
 #include "N575.h"
 #include "buffer.h"
+#include "timer_app.h"
 
 // helper function
 // Clear Buffer
-#define BUF_CLEAR(WRITE_PTR, REAR_PTR, BUFFER_START_PTR, STATUS_BIT) {  WRITE_PTR=REAR_PTR=BUFFER_START_PTR; STATUS_BIT=0; }
+#define BUF_CLEAR(WRITE_PTR, REAR_PTR, BUFFER_START_PTR, STATUS_BIT) {  WRITE_PTR=BUFFER_START_PTR; REAR_PTR=BUFFER_START_PTR; STATUS_BIT=0; }
 // Increase Ring Buffer Pointer by 1 and back to buffer starting point when out of bound
 #define BUF_PTR_INCREASE(PTR, BUFFER_START_PTR, BUFFER_SIZE)                        \
     {                                                                               \
@@ -75,8 +76,13 @@ uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
+// IR-Data Array
+#define IR_DATA_BUF_SIZE      256
+uint32_t u32Buffer_IR_DATA_Width[IR_DATA_BUF_SIZE];
+uint32_t *IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;
+
 // IR-pulse-TX Array
-#define IR_TX_BUF_SIZE      256
+#define IR_TX_BUF_SIZE      IR_DATA_BUF_SIZE
 uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
 uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
@@ -86,11 +92,18 @@ uint8_t IR_BUF_TX_FULL = 0;
 // Common function
 //
 
+void Init_IR_buffer(void)
+{
+  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_REAR_PTR, u32Buffer_IR_TX_Width, IR_BUF_TX_FULL);
+  //  
+  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_WRITE_PTR, u32Buffer_IR_DATA_Width, IR_BUF_TX_FULL);
+}
+
 void Initialize_buffer(void)
 {
   BUF_CLEAR(UART_BUF_RX_WRITE_PTR, UART_BUF_RX_REAR_PTR, u8Buffer_RX, UART_BUF_RX_FULL);
   BUF_CLEAR(UART_BUF_TX_WRITE_PTR, UART_BUF_TX_REAR_PTR, u8Buffer_TX, UART_BUF_TX_FULL);
-  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_REAR_PTR, u32Buffer_IR_TX_Width, IR_BUF_TX_FULL);
+  Init_IR_buffer();
 }
 
 //
@@ -207,12 +220,50 @@ uint8_t uart_output_dequeue(void)
 }
 
 //
+// IR-pulse-DATA Array function
+//
+void IR_data_restart_write_pointer(void)
+{
+  IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;
+}
+
+uint8_t IR_data_full(void)
+{
+    return (IR_BUF_DATA_WRITE_PTR>=(u32Buffer_IR_DATA_Width+IR_DATA_BUF_SIZE))? TRUE: FALSE;
+}
+
+uint8_t IR_data_add(uint32_t input_data)
+{
+  if(!IR_data_full())  // must check a buffer-full status before an "add"
+  {
+    *IR_BUF_DATA_WRITE_PTR = input_data;
+    IR_BUF_DATA_WRITE_PTR++;
+    return TRUE;
+  }
+  else
+  {
+    return FALSE;
+  }
+}
+
+void Copy_Input_Data_to_Tx_Data_and_Start(void)
+{
+    uint32_t *src = u32Buffer_IR_DATA_Width, *end = IR_BUF_DATA_WRITE_PTR;
+    IR_BUF_TX_WRITE_PTR = u32Buffer_IR_TX_Width;
+    if(src<end)
+    {
+        *IR_BUF_TX_WRITE_PTR++ = *src++;
+        IR_Transmit_Buffer_StartSend();
+        while(src<end)                   // from u32Buffer_IR_DATA_Width to IR_BUF_DATA_WRITE_PTR
+        {
+            *IR_BUF_TX_WRITE_PTR++ = *src++;
+        }
+    }
+}
+
+//
 // IR-pulse-TX Array function
 //
-void IR_output_restart_write_pointer(void)
-{
-  IR_BUF_TX_WRITE_PTR = u32Buffer_IR_TX_Width;
-}
 
 void IR_output_restart_read_pointer(void)
 {
@@ -222,20 +273,6 @@ void IR_output_restart_read_pointer(void)
 uint8_t IR_output_end_of_data(void)
 {
     return (IR_BUF_TX_REAR_PTR==IR_BUF_TX_WRITE_PTR)? TRUE: FALSE;
-}
-
-uint8_t IR_output_add(uint32_t input_data)
-{
-  if(IR_BUF_TX_WRITE_PTR<(u32Buffer_IR_TX_Width+IR_TX_BUF_SIZE))  // must check a buffer-full status before an "add"
-  {
-    *IR_BUF_TX_WRITE_PTR = input_data;
-    IR_BUF_TX_WRITE_PTR++;
-    return TRUE;
-  }
-  else
-  {
-    return FALSE;
-  }
 }
 
 uint8_t IR_output_read(uint32_t *return_value_ptr)
