@@ -177,7 +177,7 @@
           </Flash1>
           <bUseTDR>0</bUseTDR>
           <Flash2>Bin\Nu_Link.dll</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -373,7 +373,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_ENABLE_SEMIHOST_</Define>
+              <Define>DEBUG_ENABLE_SEMIHOST_, ENABLE_WATCH_DOG_TIMER</Define>
               <Undefine></Undefine>
               <IncludePath>..\Library\CMSIS\Include;..\Library\Device\Nuvoton\N575\Include;..\Library\StdDriver\inc</IncludePath>
             </VariousControls>
@@ -503,6 +503,11 @@
               <FileName>wdt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Library\StdDriver\src\wdt.c</FilePath>
+            </File>
+            <File>
+              <FileName>acmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Library\StdDriver\src\acmp.c</FilePath>
             </File>
           </Files>
         </Group>

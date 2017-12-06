@@ -16,6 +16,7 @@
 #include "uart_app.h"
 #include "parser.h"
 #include "timer_app.h"
+#include "acmp.h"
 
 extern void WDT_MySetup(void);
 extern void WDT_MyClearTimeOutIntFlag(void);
@@ -32,6 +33,13 @@ void WDT_IRQHandler(void)
     Reset_IR_Tx_running_status();
     // To trap Watch-dog timer when necessary
     WDT_ClearResetFlag();
+}
+
+void ACMP_IRQHandler(void)
+{
+    uint8_t compare_result;
+    compare_result = ACMP_GET_OUTPUT(ACMP,1);
+    ACMP_CLR_INT_FLAG(ACMP,1);
 }
 
 void SYS_Init(void)
@@ -53,16 +61,14 @@ void SYS_Init(void)
     CLK_EnableModuleClock(PWM0_MODULE);
     CLK_EnableModuleClock(TMR0_MODULE);
     CLK_EnableModuleClock(WDT_MODULE);
-    
+    CLK_EnableModuleClock(ACMP_MODULE);	
+
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
 
-    /* Reset PWM0 channel0~channel3 */
-    SYS_ResetModule(PWM0_RST);
-    
     // Select WDT clock
-    CLK_SetModuleClock(WDT_MODULE,CLK_CLKSEL1_WDTSEL_LIRC,0);
+    CLK_SetModuleClock(WDT_MODULE,CLK_CLKSEL1_WDTSEL_LIRC,0);  // Use 10K clock
     
     /* Update System Core Clock */
     /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
@@ -71,17 +77,55 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set GPG multi-function pins for UART0 RXD and TXD */
+    /* Set GPG multi-function pins for UART0 RXD and TXD */ // PB8 & PB9
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA8MFP_Msk) ) | SYS_GPA_MFP_PA8MFP_UART_TX;
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA9MFP_Msk) ) | SYS_GPA_MFP_PA9MFP_UART_RX;
 
-    /* Set GPA multi-function pins for PWM0 Channel0 */
+    /* Set GPA multi-function pins for PWM0 Channel0 */ // PA12 & PB4 (PB7 is temporary)
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_PWM0CH0_INV;
-    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB7MFP_Msk) ) | SYS_GPB_MFP_PB7MFP_GPIO;
+    //SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_GPIO;
     
-    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB3MFP_Msk) ) | SYS_GPB_MFP_PB3MFP_GPIO;
-      
+    // Setup I2C on PB2/PB3
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB2MFP_Msk) ) | SYS_GPB_MFP_PB2MFP_I2C_SCL;
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB3MFP_Msk) ) | SYS_GPB_MFP_PB3MFP_I2C_SDA;
+    
+    // Setup PB6 as comparator
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB6MFP_Msk) ) | SYS_GPB_MFP_PB6MFP_CMP6;
+    
+    // Setup other pins as GPIO
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA0MFP_Msk) ) | SYS_GPA_MFP_PA0MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA1MFP_Msk) ) | SYS_GPA_MFP_PA1MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA2MFP_Msk) ) | SYS_GPA_MFP_PA2MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA3MFP_Msk) ) | SYS_GPA_MFP_PA3MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA4MFP_Msk) ) | SYS_GPA_MFP_PA4MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA5MFP_Msk) ) | SYS_GPA_MFP_PA5MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA6MFP_Msk) ) | SYS_GPA_MFP_PA6MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA7MFP_Msk) ) | SYS_GPA_MFP_PA7MFP_GPIO;
+    // PB8 UART
+    // PB9 UART
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA10MFP_Msk) ) | SYS_GPA_MFP_PA10MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA11MFP_Msk) ) | SYS_GPA_MFP_PA11MFP_GPIO;                                                                                                                                                                                                                                                           
+    // PA12 PWM0
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA13MFP_Msk) ) | SYS_GPA_MFP_PA13MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA14MFP_Msk) ) | SYS_GPA_MFP_PA14MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA15MFP_Msk) ) | SYS_GPA_MFP_PA15MFP_GPIO;
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB0MFP_Msk) ) | SYS_GPB_MFP_PB0MFP_GPIO;
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB1MFP_Msk) ) | SYS_GPB_MFP_PB1MFP_GPIO;
+    // PB2 I2C
+    // PB3 I2C
+    // PB4 PWM
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB5MFP_Msk) ) | SYS_GPB_MFP_PB5MFP_GPIO;
+    // PB6 comparator
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB7MFP_Msk) ) | SYS_GPB_MFP_PB7MFP_GPIO;
+ 
+    /* Reset PWM0 channel0~channel3 */
+    SYS_ResetModule(PWM0_RST);
+    SYS_ResetModule(UART0_RST);
+    SYS_ResetModule(I2C0_RST);
+    SYS_ResetModule(TMR0_RST);
+    SYS_ResetModule(ACMP_RST);
+
     /* Lock protected registers */
     SYS_LockReg();
 }
@@ -92,10 +136,10 @@ void ProcessInputCommand(void)
     switch(Read_CMD_Status())
     {
         case ENUM_CMD_STOP_CMD_RECEIVED:
+            uart_output_enqueue_with_newline('S');
             Set_IR_Repeat_Cnt(0);
             Clear_CMD_Status();
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
-            uart_output_enqueue_with_newline('S');
             Init_Parser();
             Init_Timer_App();
             Init_IR_buffer();
@@ -157,13 +201,14 @@ void ProcessInputCommand(void)
 
         case ENUM_CMD_WIDTH_DATA_READY:
             uart_output_enqueue_with_newline('R');
+            Clear_CMD_Status();
+            Set_IR_Repeat_Cnt(0);
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
             Set_PWM_period(Next_PWM_Period_Get());
             Set_PWM_duty_cycle(Next_DutyCycle_Period_Get());
             Copy_Input_Data_to_Tx_Data_and_Start();
             //IR_Transmit_Buffer_StartSend();
-            Clear_CMD_Status();
             // Debug message
             {
             }
@@ -184,9 +229,11 @@ int main(void)
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
 
-    printf("\n+------------------------------+\n");
-    printf(  "| Welcome to My IR Transmitter |\n");
-    printf(  "+------------------------------\n");
+    printf(  "-----------------------------\n");
+    printf(  " Warm greeting by BlueRat\n");
+    printf(  " "__DATE__  "\n" );
+    printf(  " "__TIME__ "\n" );
+    printf(  "-----------------------------\n");
 	
     Initialize_buffer();
     Init_Parser();    
@@ -197,28 +244,31 @@ int main(void)
     
     /* set PWM0 channel 0 output configuration */
     PWM_ConfigOutputChannel(PWM0, PWM_CH0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
-        
-    /* Enable PWM Output path for PWM0 channel 0 */
     PWM_EnableOutput(PWM0, 0x1);
-
-    // Setup Watch Dog Timer
-    //WDT_MySetup();
-
+        
     // Setup Timer
     Timer_Init();    
+
+    // Setup Analog Comparator
+    ACMP_Open(ACMP,1,ACMP_CMP1VNEG_VBG,0);
+    ACMP_ENABLE_INT(ACMP,1);
 
     // Enable PWM channel 0 period interrupt
     //PWM0->INTEN = PWM_INTEN_PIEN0_Msk;
     NVIC_EnableIRQ(PWM0_IRQn);
     NVIC_EnableIRQ(TMR0_IRQn);	
-    //NVIC_EnableIRQ(WDT_IRQn);
+    NVIC_EnableIRQ(ACMP_IRQn);
+#ifdef ENABLE_WATCH_DOG_TIMER
+    // Setup Watch Dog Timer
+    WDT_MySetup();
+    NVIC_EnableIRQ(WDT_IRQn);
+#endif // ENABLE_WATCH_DOG_TIMER
     
     while(1)
     {
         if(!uart_input_queue_empty_status())
         {
             ProcessInputChar(uart_input_dequeue());
-
             if(CheckSum_Ready()==true)
             {
                 if (Read_CheckSum()==0)
@@ -237,7 +287,9 @@ int main(void)
             Clear_IR_Tx_Finish();
             uart_output_enqueue_with_newline('+');               // Tx finish one-time
         }
+#ifdef ENABLE_WATCH_DOG_TIMER
         WDT_ResetCounter();
+#endif // ENABLE_WATCH_DOG_TIMER
     }
         
 /*        

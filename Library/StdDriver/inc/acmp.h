@@ -106,7 +106,8 @@ extern "C"
   * @param[in] Ch is ACMP number, could 0 or 1.
   * @return    1 or 0
   */
-#define ACMP_GET_OUTPUT(acmp, Ch) ((acmp->STATUS & ACMP_STATUS_ACMPO##Ch_Msk)?1:0)
+//#define ACMP_GET_OUTPUT(acmp, Ch) ((acmp->STATUS & ACMP_STATUS_ACMPO##Ch_Msk)?1:0)
+#define ACMP_GET_OUTPUT(acmp, Ch) ((acmp->STATUS & ACMP_STATUS_ACMPO##Ch##_Msk)?1:0)
 
 /**
   * @brief     This macro is used to get ACMP interrupt flag
@@ -114,7 +115,7 @@ extern "C"
   * @param[in] Ch is ACMP number, could 0 or 1.
   * @return    ACMP interrupt occurred or not
   */
-#define ACMP_GET_INT_FLAG(acmp, Ch) ((acmp->STATUS & ACMP_STATUS_ACMPIF##Ch_Msk)?1:0)
+#define ACMP_GET_INT_FLAG(acmp, Ch) ((acmp->STATUS & ACMP_STATUS_ACMPIF##Ch##_Msk)?1:0)
 
 /**
   * @brief     This macro is used to clear ACMP interrupt flag
@@ -122,7 +123,7 @@ extern "C"
   * @param[in] Ch is ACMP number, could 0 or 1.
   * @return    None
   */
-#define ACMP_CLR_INT_FLAG(acmp, Ch) (acmp->STATUS |= ACMP_STATUS_ACMPIF##Ch_Msk)
+#define ACMP_CLR_INT_FLAG(acmp, Ch) ((acmp->STATUS |= ACMP_STATUS_ACMPIF##Ch##_Msk))
 
 /**
   * @brief     This macro is used to select the V+ pin of ACMP only for CMP0
