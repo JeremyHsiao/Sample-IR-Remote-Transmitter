@@ -68,6 +68,7 @@ uint8_t Get_IR_Tx_Finish_status(void)
 void Restart_IR_Pulse(void)
 {
     PWM_SetOutputPulse(PWM0, PWM_CH0, 20, 0);
+    PWM_SetOutputPulse(PWM0, PWM_CH1, 20, 0);
     bLevel = 1;
 }
 
@@ -78,24 +79,28 @@ void Setup_IR_PWM_Pulse(void)
         if(PWM_period!=0xffffffff)
         {
             PWM_SetOutputPulse(PWM0, PWM_CH0, PWM_period, Get_PWM_duty_cycle());
+            PWM_SetOutputPulse(PWM0, PWM_CH1, PWM_period, Get_PWM_duty_cycle());
         }
         else
         {
             PWM_SetOutputPulse(PWM0, PWM_CH0, 20, 100);
+            PWM_SetOutputPulse(PWM0, PWM_CH1, 20, 100);
         }
-        PB->DOUT |= 0x08UL;
+        //PB->DOUT |= 0x08UL;
 	}
 	else
 	{
         if(PWM_period!=0xffffffff)
         {
             PWM_SetOutputPulse(PWM0, PWM_CH0, PWM_period, 0);
+            PWM_SetOutputPulse(PWM0, PWM_CH1, PWM_period, 0);
         }
         else
         {
             PWM_SetOutputPulse(PWM0, PWM_CH0, 20, 0);
+            PWM_SetOutputPulse(PWM0, PWM_CH1, 20, 0);
         }
-        PB->DOUT &= ~0x08UL;
+        //PB->DOUT &= ~0x08UL;
 	}
     bLevel=!bLevel;
 }
@@ -140,6 +145,7 @@ void TMR0_IRQHandler(void)
         {
             // No more data
             IR_Transmitter_Running = 0;
+            PWM_Stop(PWM0, 0x0);
             PWM_Stop(PWM0, 0x1);
             TIMER_Stop(WIDTH_TIMER);
             TIMER_DisableInt(WIDTH_TIMER);
@@ -172,6 +178,7 @@ void IR_Transmit_Buffer_StartSend(void)
         Setup_IR_PWM_Pulse();
         IR_Transmitter_Running = 1;
         TIMER_EnableInt(WIDTH_TIMER);
+        PWM_Start(PWM0, 0x0);
         PWM_Start(PWM0, 0x1);
         TIMER_Start(WIDTH_TIMER);
 	}

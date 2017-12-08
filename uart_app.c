@@ -40,6 +40,40 @@ int itoa_10(uint32_t value, char* result)
 	return str_len;
 }
 
+int itoa_16(uint32_t value, char* result)
+{
+	// check that the base if valid
+
+	char*       ptr = result, *ptr1 = result, tmp_char;
+	uint32_t    tmp_value;
+    int         str_len;
+
+	str_len = 0;
+	do {
+		tmp_value = value % 16;
+		value /= 16;
+		*ptr++ = "0123456789abcdef" [tmp_value];
+		str_len++;
+	} while ( value );
+
+	*ptr-- = '\0';
+	while(ptr1 < ptr) {
+		tmp_char = *ptr;
+		*ptr--= *ptr1;
+		*ptr1++ = tmp_char;
+	}
+	return str_len;
+}
+
+void OutputHexValue(uint32_t value)
+{
+    char    temp_str[8+1];
+    int     temp_index, temp_length;
+    temp_length = itoa_16(value,temp_str);
+    for (temp_index=0;temp_index<temp_length;temp_index++)
+        uart_output_enqueue(temp_str[temp_index]);
+}
+
 void UART0_IRQHandler(void)
 {
   // Tx when FIFO is empty - interrupt occurs less than using FIFO is not full

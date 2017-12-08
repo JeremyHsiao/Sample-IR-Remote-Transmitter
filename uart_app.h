@@ -15,5 +15,7 @@
 extern void UART0_IRQHandler(void);
 extern void UART_init(void);
 extern int itoa_10(uint32_t value, char* result);
+extern int itoa_16(uint32_t value, char* result);
+extern void OutputHexValue(uint32_t value);
 
 #endif // !_UART_APP_H_
