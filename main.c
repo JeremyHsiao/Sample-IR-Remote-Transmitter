@@ -23,7 +23,6 @@ extern void WDT_MyClearTimeOutIntFlag(void);
 
 void PWM0_IRQHandler(void)
 {
-	
     // Clear channel 0 period interrupt flag
     PWM_ClearIntFlag(PWM0, 0);
     PWM_ClearIntFlag(PWM0, 1);
@@ -36,9 +35,10 @@ void WDT_IRQHandler(void)
     WDT_ClearResetFlag();
 }
 
+uint8_t compare_result;
+
 void ACMP_IRQHandler(void)
 {
-    uint8_t compare_result;
     compare_result = ACMP_GET_OUTPUT(ACMP,1);
     ACMP_CLR_INT_FLAG(ACMP,1);
 }
@@ -130,14 +130,21 @@ void SYS_Init(void)
     GPIO_SetMode(PA, BIT5, GPIO_MODE_OUTPUT);
     GPIO_SetMode(PA, BIT6, GPIO_MODE_OUTPUT);
     GPIO_SetMode(PA, BIT7, GPIO_MODE_OUTPUT);
-    GPIO_SetMode(PA, BIT10, GPIO_MODE_INPUT);
-    GPIO_SetMode(PA, BIT11, GPIO_MODE_INPUT);
-    GPIO_SetMode(PA, BIT14, GPIO_MODE_INPUT);
-    GPIO_SetMode(PA, BIT15, GPIO_MODE_INPUT);
-    GPIO_SetMode(PB, BIT0, GPIO_MODE_INPUT);
-    GPIO_SetMode(PB, BIT1, GPIO_MODE_INPUT);
+    GPIO_SetMode(PA, BIT10, GPIO_MODE_QUASI);
+    GPIO_SetMode(PA, BIT11, GPIO_MODE_QUASI);
+    GPIO_SetMode(PA, BIT14, GPIO_MODE_QUASI);
+    GPIO_SetMode(PA, BIT15, GPIO_MODE_QUASI);
+    GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
+    GPIO_SetMode(PB, BIT1, GPIO_MODE_QUASI);
+    //GPIO_SetMode(PB, BIT7, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
-    
+    // Set output as 1 for all Quasi-bidirectional mode GPIO
+    PA->DATMSK = ~(GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
+    PA->DOUT = (GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
+    PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    //PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+
     SYS_ResetModule(PWM0_RST);
     SYS_ResetModule(UART0_RST);
     SYS_ResetModule(I2C0_RST);
@@ -150,11 +157,11 @@ void SYS_Init(void)
 
 void ProcessInputCommand(void)
 {
-    uint8_t repeat_cnt;
+    uint32_t repeat_cnt;
     switch(Read_CMD_Status())
     {
         case ENUM_CMD_STOP_CMD_RECEIVED:
-            uart_output_enqueue_with_newline('S');
+            uart_output_enqueue_with_newline('Z');
             Set_IR_Repeat_Cnt(0);
             Clear_CMD_Status();
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
@@ -166,6 +173,7 @@ void ProcessInputCommand(void)
         case ENUM_CMD_REPEAT_COUNT_RECEIVED:
             repeat_cnt = Next_Repeat_Count_Get();
             Next_Repeat_Count_Set(0);
+            uart_output_enqueue('r');
             OutputHexValue(repeat_cnt);
             uart_output_enqueue('\n');
             if(repeat_cnt>0)
@@ -178,9 +186,9 @@ void ProcessInputCommand(void)
             break;
             
         case ENUM_CMD_INPUT_CMD_RECEIVED:
-            if(Next_Command_Get()>=0xf0)
+            if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_ONLY)
             {
-                if(Next_Command_Get()==0xf0)        // Read Input Port
+                if(Next_Command_Get()==ENUM_CMD_GET_GPIO_INPUT)        // Read Input Port
                 {
                     uint32_t input_data, temp_pa, temp_pb;
                     temp_pa = PA->PIN;
@@ -197,6 +205,17 @@ void ProcessInputCommand(void)
                     OutputHexValue(input_data);
                     uart_output_enqueue('\n');
                 }
+                else if(Next_Command_Get()==ENUM_CMD_GET_SENSOR_VALUE)
+                {
+                    if(compare_result)
+                    {
+                         uart_output_enqueue_with_newline('L');
+                    }
+                    else
+                    {
+                         uart_output_enqueue_with_newline('l');
+                    }
+                }
                 else
                 {
                     uart_output_enqueue_with_newline('U');
@@ -206,12 +225,13 @@ void ProcessInputCommand(void)
             }
             else 
             {
-                if(Next_Command_Get()>=0xe0)    // with byte input
+                if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_BYTE)    // with byte input
                 {
-                    if(Next_Command_Get()==0xe0) // Output whole byte
+                    if(Next_Command_Get()==ENUM_CMD_SET_GPIO_ALL_BIT) // Output whole byte
                     {
                         uint32_t output_data;
                         output_data = Next_Input_Parameter_Get()&0xff;
+                        PA->DATMSK = ~(0xffUL);
                         PA->DOUT = output_data;
                         uart_output_enqueue('P');
                         OutputHexValue(output_data);
@@ -224,23 +244,17 @@ void ProcessInputCommand(void)
                         uart_output_enqueue('\n');
                     }
                 }
-                else if(Next_Command_Get()>=0xd0)
+                else if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_WORD)
                 {
-                    if(Next_Command_Get()==0xd0)  // Output single bit
+                    if(Next_Command_Get()==ENUM_CMD_SET_GPIO_SINGLE_BIT)  // Output single bit
                     {
                         uint32_t output_data, bit_no, return_data;
                         output_data = Next_Input_Parameter_Get() & 0xffff;
-                        bit_no = (output_data>>8);
-                        return_data = (bit_no<<4) | (output_data & 0x01);
-                        PA->DATMSK = ~(1<<bit_no);
-                        if(output_data&0x01)
-                        {
-                            PA->DOUT = 0xffffffff;
-                        }
-                        else
-                        {
-                            PA->DOUT = 0;
-                        }
+                        bit_no = (output_data>>8)&0xff;
+                        output_data &= 0x01;
+                        return_data = (bit_no<<8) | output_data;
+                        PA->DATMSK = ~(1UL<<bit_no);
+                        output_data <<= bit_no;
                         PA->DOUT = output_data;
                         uart_output_enqueue('S');
                         OutputHexValue(return_data);
@@ -253,11 +267,33 @@ void ProcessInputCommand(void)
                         uart_output_enqueue('\n');
                     }
                 }
-                else if(Next_Command_Get()>=0xc0)
+                else if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD)
                 {
-                    uart_output_enqueue('Y');
-                    OutputHexValue(Next_Input_Parameter_Get()&0xffffffff);
-                    uart_output_enqueue('\n');
+                    if(Next_Command_Get()==ENUM_CMD_ADD_REPEAT_COUNT)        // Add repeat count (max value after added is 0xffffffff)
+                    {
+                        uint32_t output_data;
+                        output_data = Next_Input_Parameter_Get()&0xffffffff;
+                        uart_output_enqueue('r');
+                        OutputHexValue(output_data);
+                        uart_output_enqueue('\n');
+                        if(output_data>0)
+                        {
+                            uint64_t temp_cnt;
+                            temp_cnt = Get_IR_Repeat_Cnt() + output_data;
+                            if(temp_cnt>0xffffffff)
+                            {
+                                temp_cnt=0xffffffff;
+                            }
+                            Set_IR_Repeat_Cnt(temp_cnt);
+                            IR_Transmit_Buffer_StartSend();
+                        }
+                    }
+                    else
+                    {
+                        uart_output_enqueue('Y');
+                        OutputHexValue(Next_Input_Parameter_Get()&0xffffffff);
+                        uart_output_enqueue('\n');
+                    }
                 }
             }
             Clear_CMD_Status();

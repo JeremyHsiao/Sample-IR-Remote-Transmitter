@@ -135,7 +135,7 @@ void ProcessInputChar(uint8_t input_byte)
     {
      	case ENUM_PARSING_STATE_WAIT_SYNC_BYTE:
      		// Neither 0xff is allowed for repeat count, nor 0xffxx is allowed for pulse-width, nor 0xffffffff is allowed for pulse width, so it is used as "preamble" of data string (at least 4 0xff)
-     		if(input_byte!=0xff)	// Stay in this wait-for-sync state until 0xff occurs
+     		if(input_byte!=ENUM_SYNC_BYTE_VALUE)	// Stay in this wait-for-sync state until 0xff occurs
             {
                 next_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;		// Wait for 0xff --> state unchanged if not 0xff
             }
@@ -146,7 +146,7 @@ void ProcessInputChar(uint8_t input_byte)
             break;
 
      	case ENUM_PARSING_STATE_WAIT_REPEAT_COUNT:
-			if (input_byte == 0xff)									// 0xff still treaded as sync-byte here
+			if (input_byte == ENUM_SYNC_BYTE_VALUE)					// 0xff still treaded as sync-byte here
 			{
 				next_state = ENUM_PARSING_STATE_WAIT_REPEAT_COUNT;
 			}
@@ -156,28 +156,28 @@ void ProcessInputChar(uint8_t input_byte)
 				CheckSum_Read = false;
                 switch (input_byte)
                 {
-                    case 0xfe: // Stop Tx CMD
+                    case ENUM_CMD_STOP_ALL: // Stop Tx CMD
                         Next_Command = input_byte;
                         Next_input_parameter = 0;
                         current_cmd_status = ENUM_CMD_STOP_CMD_RECEIVED;		
                         next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
                         break;
                     // Other single byte CMD so next data is checksum - for future extension
-                    case 0xfd:
-                    case 0xfc:
-                    case 0xfb:
-                    case 0xfa:
-                    case 0xf9:
-                    case 0xf8:
-                    case 0xf7:
-                    case 0xf6:
-                    case 0xf5:
-                    case 0xf4:
-                    case 0xf3:
-                    case 0xf2:
-                    case 0xf1:
-                    case 0xf0:
-                        Next_Command = input_byte;
+                    case ENUM_CMD_CODE_0XF2:
+                    case ENUM_CMD_CODE_0XF3:
+                    case ENUM_CMD_CODE_0XF4:
+                    case ENUM_CMD_CODE_0XF5:
+                    case ENUM_CMD_CODE_0XF6:
+                    case ENUM_CMD_CODE_0XF7:
+                    case ENUM_CMD_CODE_0XF8:
+                    case ENUM_CMD_CODE_0XF9:
+                    case ENUM_CMD_CODE_0XFA:
+                    case ENUM_CMD_CODE_0XFB:
+                    case ENUM_CMD_CODE_0XFC:
+                    case ENUM_CMD_CODE_0XFD:
+                    case ENUM_CMD_GET_SENSOR_VALUE:
+                    case ENUM_CMD_GET_GPIO_INPUT:
+                       Next_Command = input_byte;
                         Next_input_parameter = 0;
                         current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
                         next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
@@ -198,7 +198,7 @@ void ProcessInputChar(uint8_t input_byte)
                     case 0xe3:
                     case 0xe2:
                     case 0xe1:
-                    case 0xe0:
+                    case ENUM_CMD_SET_GPIO_ALL_BIT:
                         Next_Command = input_byte;
                         Next_input_parameter = 0;
                         current_cmd_status = ENUM_CMD_RECEIVING;
@@ -220,7 +220,7 @@ void ProcessInputChar(uint8_t input_byte)
                     case 0xd3:
                     case 0xd2:
                     case 0xd1:
-                    case 0xd0:
+                    case ENUM_CMD_SET_GPIO_SINGLE_BIT:
                         Next_Command = input_byte;
                         Next_input_parameter = 0;
                         current_cmd_status = ENUM_CMD_RECEIVING;
