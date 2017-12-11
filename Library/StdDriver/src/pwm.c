@@ -182,7 +182,35 @@ uint32_t PWM_ConfigCaptureChannel(PWM_T *pwm,
 //    return(i);
 //}
 
-void PWM_ConfigOutputChannel(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32Frequency, uint32_t u32DutyCycle)
+//void PWM_ConfigOutputChannel(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32Frequency, uint32_t u32DutyCycle)
+//{
+//    /* this table is mapping divider value to register configuration */
+//    const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
+//    #define  u32PWMClockSrc (48000000)  // Here we will set to 1us per count (48MHz/48)
+//    #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
+//    #define  u8Prescale     (48)        // Can be 2~256
+//    uint16_t u16CNR;            
+//        
+//    // every two channels share a prescaler
+//    (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | ((u8Prescale-1) << ((u32ChannelNum >> 1) * 8));   // pre-scaler must -1
+//    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u32PWMDividerToRegTbl[u8Divider] << (4 * u32ChannelNum));// LUT for divider
+
+//    // Setup auto-reload mode & Inverting output
+//    //(pwm)->CTL |= (PWM_CTL_CNTMODE0_Msk|PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);
+//    //(pwm)->CTL |= (PWM_CTL_CNTMODE0_Msk) << (8 * u32ChannelNum);  //No inverting 
+
+//    // Setup auto-reload mode 
+//    (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+//    u16CNR = (((u32PWMClockSrc/u8Divider)/u8Prescale)/u32Frequency);   
+//    // load value    
+////    u32DutyCycle = 100 - u32DutyCycle;    
+////    *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) =  u32DutyCycle * (u16CNR + 1) / 100 - 1;
+////    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = u16CNR;
+//    //return(u32PWMClockSrc / (u8Prescale * u8Divider * u16CNR)); // return estimated PWM frequency
+//    PWM_SetOutputPulse(pwm,u32ChannelNum,u16CNR,u32DutyCycle);
+//}
+
+void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32DutyCycle)
 {
     /* this table is mapping divider value to register configuration */
     const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
@@ -192,25 +220,38 @@ void PWM_ConfigOutputChannel(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32Fre
     uint16_t u16CNR;            
         
     // every two channels share a prescaler
-    (pwm)->CLKPSC = ((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk << ((u32ChannelNum >> 1) * 8))) | ((u8Prescale-1) << ((u32ChannelNum >> 1) * 8));   // pre-scaler must -1
-    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk << (4 * u32ChannelNum))) | (u32PWMDividerToRegTbl[u8Divider] << (4 * u32ChannelNum));// LUT for divider
-
-    // Setup auto-reload mode & Inverting output
-    //(pwm)->CTL |= (PWM_CTL_CNTMODE0_Msk|PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);
-    //(pwm)->CTL |= (PWM_CTL_CNTMODE0_Msk) << (8 * u32ChannelNum);  //No inverting 
-
+    (pwm)->CLKPSC = (((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk)) | (u8Prescale-1));   // pre-scaler must -1
+    // Setup clock divider
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk*0x11UL)) | (u32PWMDividerToRegTbl[u8Divider]*0x11UL);// LUT for divider
     // Setup auto-reload mode 
-    (pwm)->CTL |= PWM_CTL_CNTMODE0_Msk << (8 * u32ChannelNum);
+    (pwm)->CTL = (PWM_CTL_CNTMODE0_Msk*0x101UL);
     u16CNR = (((u32PWMClockSrc/u8Divider)/u8Prescale)/u32Frequency);   
     // load value    
-//    u32DutyCycle = 100 - u32DutyCycle;    
-//    *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) =  u32DutyCycle * (u16CNR + 1) / 100 - 1;
-//    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = u16CNR;
-    //return(u32PWMClockSrc / (u8Prescale * u8Divider * u16CNR)); // return estimated PWM frequency
-    PWM_SetOutputPulse(pwm,u32ChannelNum,u16CNR,u32DutyCycle);
+    PWM_SetOutputPulse_v2(pwm,u16CNR,u32DutyCycle);
 }
 
-void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint32_t u32DutyCycle)
+//void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint32_t u32DutyCycle)
+//{
+//    uint32_t    temp_CMP;
+
+//    u32DutyCycle = 100 - u32DutyCycle;    
+//    temp_CMP = ( ((u32DutyCycle*(width+1))*2) + 1) / (100*2);
+//    
+//    if(temp_CMP>0)
+//    {
+//        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = temp_CMP - 1;
+//        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = width;
+//        (pwm)->CTL &= (~PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);      // No Inverting
+//    }
+//    else
+//    {
+//        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = width;
+//        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = width;
+//        (pwm)->CTL |= (PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);      // Inverting
+//    }
+//}
+ 
+void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
 {
     uint32_t    temp_CMP;
 
@@ -219,15 +260,19 @@ void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint
     
     if(temp_CMP>0)
     {
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = temp_CMP - 1;
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = width;
-        (pwm)->CTL &= (~PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);      // No Inverting
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0))))) = temp_CMP - 1;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = width;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1))))) = temp_CMP - 1;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD1))))) = width;
+        (pwm)->CTL &= ~(PWM_CTL_PINV0_Msk*0x101UL);      // No Inverting
     }
     else
     {
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0)) + u32ChannelNum * 12))) = width;
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + (u32ChannelNum) * 12))) = width;
-        (pwm)->CTL |= (PWM_CTL_PINV0_Msk) << (8 * u32ChannelNum);      // Inverting
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0))))) = width;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = width;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1)))))  = width;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD1))))) = width;
+        (pwm)->CTL |= (PWM_CTL_PINV0_Msk*0x101UL);       // Inverting
     }
 }
 
@@ -240,16 +285,25 @@ void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint
  * @return None
  * @details This function is used to start PWM module.
  */
-void PWM_Start(PWM_T *pwm, uint32_t u32ChannelMask)
+//void PWM_Start(PWM_T *pwm, uint32_t u32ChannelMask)
+//{
+//    uint32_t u32Mask = 0, i;
+//    for(i = 0; i < PWM_CHANNEL_NUM; i ++)
+//    {
+//        if(u32ChannelMask & (1 << i))
+//        {
+//            u32Mask |= (PWM_CTL_CNTEN0_Msk << (i * 8));
+//        }
+//    }
+
+//    (pwm)->CTL |= u32Mask;
+//}
+
+void PWM_Start_v2(PWM_T *pwm)
 {
-    uint32_t u32Mask = 0, i;
-    for(i = 0; i < PWM_CHANNEL_NUM; i ++)
-    {
-        if(u32ChannelMask & (1 << i))
-        {
-            u32Mask |= (PWM_CTL_CNTEN0_Msk << (i * 8));
-        }
-    }
+    uint32_t u32Mask;
+    u32Mask = (PWM_CTL_CNTEN0_Msk &0x101);
+//    u32Mask = (PWM_CTL_CNTEN0_Msk &0x100);
 
     (pwm)->CTL |= u32Mask;
 }
@@ -263,16 +317,22 @@ void PWM_Start(PWM_T *pwm, uint32_t u32ChannelMask)
  * @return None
  * @details This function is used to stop PWM module.
  */
-void PWM_Stop(PWM_T *pwm, uint32_t u32ChannelMask)
+//void PWM_Stop(PWM_T *pwm, uint32_t u32ChannelMask)
+//{
+//    uint32_t i;
+//    for(i = 0; i < PWM_CHANNEL_NUM; i ++)
+//    {
+//        if(u32ChannelMask & (1 << i))
+//        {
+//            *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + i * 12))) = 0;
+//        }
+//    }
+//}
+
+void PWM_Stop_v2(PWM_T *pwm)
 {
-    uint32_t i;
-    for(i = 0; i < PWM_CHANNEL_NUM; i ++)
-    {
-        if(u32ChannelMask & (1 << i))
-        {
-            *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + i * 12))) = 0;
-        }
-    }
+    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = 0;
+    *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0)) + 12))) = 0;
 }
 
 /**

@@ -336,10 +336,8 @@ int main(void)
     Init_Timer_App();
 
     /* set PWM0 channel 0 output configuration */
-    PWM_ConfigOutputChannel(PWM0, PWM_CH0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
-    PWM_ConfigOutputChannel(PWM0, PWM_CH1, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
-    PWM_EnableOutput(PWM0, 0x0);
-    PWM_EnableOutput(PWM0, 0x1);
+    PWM_ConfigOutputChannel_v2(PWM0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
+    PWM_EnableOutput(PWM0, 0x3); // Enable Output of both Channels at once
     // PWM interrup not used at this moment
     //PWM_EnableInt(PWM0, 0x0, 1);
     //PWM_EnableInt(PWM0, 0x1, 1);
