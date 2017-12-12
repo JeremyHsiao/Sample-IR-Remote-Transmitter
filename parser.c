@@ -13,6 +13,7 @@
 
 typedef enum {
     ENUM_PARSING_STATE_WAIT_SYNC_BYTE = 0,				 // Also initial state
+    ENUM_PARSING_STATE_WAIT_COMMAND_CODE,
     ENUM_PARSING_STATE_WAIT_REPEAT_COUNT,
     ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE,
     ENUM_PARSING_STATE_WAIT_CARRIER_WIDTH_HIGH,
@@ -41,7 +42,7 @@ static uint32_t				Next_PWM_duty_cycle;
 static uint8_t      		Internal_CheckSum;
 static uint8_t				Next_Repeat_Count;
 static ENUM_PARSING_STATE	current_state;
-static ENUM_CMD_STATUS		current_cmd_status;
+//static ENUM_CMD_STATUS		current_cmd_status;
 static Bool					CheckSum_Read;
 static uint8_t              Next_Command;
 static uint32_t             Next_input_parameter;
@@ -53,7 +54,7 @@ void Init_Parser(void)
     Next_Repeat_Count = 0;
     Internal_CheckSum = 0xff;
     current_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE; // Initial State
-    current_cmd_status = ENUM_CMD_IDLE;
+    //current_cmd_status = ENUM_CMD_IDLE;
     CheckSum_Read = false;
     Next_Command = 0xfe;
     Next_input_parameter = 0;
@@ -75,15 +76,15 @@ void Reset_CheckSum(void)
 	Internal_CheckSum = 0;
 }
 
-ENUM_CMD_STATUS Read_CMD_Status(void)
-{
-	return current_cmd_status;
-}
+//ENUM_CMD_STATUS Read_CMD_Status(void)
+//{
+//	return current_cmd_status;
+//}
 
-void Clear_CMD_Status(void)
-{
-	current_cmd_status = ENUM_CMD_IDLE;
-}
+//void Clear_CMD_Status(void)
+//{
+//	current_cmd_status = ENUM_CMD_IDLE;
+//}
 
 void Next_Repeat_Count_Set(uint8_t new_cnt)
 {
@@ -120,6 +121,11 @@ uint8_t Next_Command_Get(void)
     return Next_Command;
 }
     
+void Next_Command_Clear(void)
+{
+    Next_Command = ENUM_CMD_IDLE;
+}
+    
 uint32_t Next_Input_Parameter_Get(void)
 {
     return Next_input_parameter;
@@ -128,8 +134,7 @@ uint32_t Next_Input_Parameter_Get(void)
 void ProcessInputChar(uint8_t input_byte)
 {
     static uint32_t         		temp_buf = 0;
-//    static uint32_t         		temp_level = 0;
-           ENUM_PARSING_STATE      	next_state;
+    ENUM_PARSING_STATE      	    next_state;
 
     switch (current_state)
     {
@@ -141,123 +146,53 @@ void ProcessInputChar(uint8_t input_byte)
             }
             else
             {
-            	next_state = ENUM_PARSING_STATE_WAIT_REPEAT_COUNT;	// go to next state to get a non-0xff next byte
+            	next_state = ENUM_PARSING_STATE_WAIT_COMMAND_CODE;	// go to next state to get a non-0xff next byte
             }
             break;
 
-     	case ENUM_PARSING_STATE_WAIT_REPEAT_COUNT:
+     	case ENUM_PARSING_STATE_WAIT_COMMAND_CODE:
 			if (input_byte == ENUM_SYNC_BYTE_VALUE)					// 0xff still treaded as sync-byte here
 			{
-				next_state = ENUM_PARSING_STATE_WAIT_REPEAT_COUNT;
+				next_state = ENUM_PARSING_STATE_WAIT_COMMAND_CODE;
 			}
 			else													// Valid data if not 0xff here
 			{
 				Internal_CheckSum = input_byte;
+                Next_Command = input_byte;
+                Next_input_parameter = 0;
 				CheckSum_Read = false;
-                switch (input_byte)
+                if(input_byte>=CMD_SEND_COMMAND_CODE_ONLY)
                 {
-                    case ENUM_CMD_STOP_ALL: // Stop Tx CMD
-                        Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        current_cmd_status = ENUM_CMD_STOP_CMD_RECEIVED;		
-                        next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
-                        break;
-                    // Other single byte CMD so next data is checksum - for future extension
-                    case ENUM_CMD_CODE_0XF2:
-                    case ENUM_CMD_CODE_0XF3:
-                    case ENUM_CMD_CODE_0XF4:
-                    case ENUM_CMD_CODE_0XF5:
-                    case ENUM_CMD_CODE_0XF6:
-                    case ENUM_CMD_CODE_0XF7:
-                    case ENUM_CMD_CODE_0XF8:
-                    case ENUM_CMD_CODE_0XF9:
-                    case ENUM_CMD_CODE_0XFA:
-                    case ENUM_CMD_CODE_0XFB:
-                    case ENUM_CMD_CODE_0XFC:
-                    case ENUM_CMD_CODE_0XFD:
-                    case ENUM_CMD_GET_SENSOR_VALUE:
-                    case ENUM_CMD_GET_GPIO_INPUT:
-                       Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
-                        next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
-                        break;
-                    // 1-byte data CMD so next data is byte data - for future extension
-                    case 0xef:
-                    case 0xee:
-                    case 0xed:
-                    case 0xec:
-                    case 0xeb:
-                    case 0xea:
-                    case 0xe9:
-                    case 0xe8:
-                    case 0xe7:
-                    case 0xe6:
-                    case 0xe5:
-                    case 0xe4:
-                    case 0xe3:
-                    case 0xe2:
-                    case 0xe1:
-                    case ENUM_CMD_SET_GPIO_ALL_BIT:
-                        Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        current_cmd_status = ENUM_CMD_RECEIVING;
-                        next_state = ENUM_PARSING_STATE_WAIT_DATA_BYTE;
-                        break;
-                    // 2-byte data CMD so next data is high-byte of word data - for future extension
-                    case 0xdf:
-                    case 0xde:
-                    case 0xdd:
-                    case 0xdc:
-                    case 0xdb:
-                    case 0xda:
-                    case 0xd9:
-                    case 0xd8:
-                    case 0xd7:
-                    case 0xd6:
-                    case 0xd5:
-                    case 0xd4:
-                    case 0xd3:
-                    case 0xd2:
-                    case 0xd1:
-                    case ENUM_CMD_SET_GPIO_SINGLE_BIT:
-                        Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        current_cmd_status = ENUM_CMD_RECEIVING;
-                        next_state = ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH;
-                        break;
-                    // 4-byte data CMD so next data is 1st (highest) byte of DWORD data - for future extension
-                    case 0xcf:
-                    case 0xce:
-                    case 0xcd:
-                    case 0xcc:
-                    case 0xcb:
-                    case 0xca:
-                    case 0xc9:
-                    case 0xc8:
-                    case 0xc7:
-                    case 0xc6:
-                    case 0xc5:
-                    case 0xc4:
-                    case 0xc3:
-                    case 0xc2:
-                    case 0xc1:
-                    case 0xc0:
-                        Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        current_cmd_status = ENUM_CMD_RECEIVING;
-                        next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST;
-                        break;
-                    // Other smaller value is treated as repreat count.
-                    default:
-                        Next_Command = input_byte;
-                        Next_input_parameter = 0;
-                        Next_Repeat_Count_Set(input_byte);
-                        current_cmd_status = ENUM_CMD_RECEIVING;
-                        next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
-                        break;
+                     next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
                 }
- 			}
+                else if(input_byte>=CMD_SEND_COMMAND_CODE_WITH_BYTE)
+                {
+                    next_state = ENUM_PARSING_STATE_WAIT_DATA_BYTE;
+                }
+                else if(input_byte>=CMD_SEND_COMMAND_CODE_WITH_WORD)
+                {
+                    next_state = ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH;
+                }
+                else if (input_byte>=CMD_SEND_COMMAND_CODE_WITH_WORD)
+                {
+                    next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST;
+                }
+                else if (input_byte==ENUM_CMD_INPUT_TX_SIGNAL)
+                {
+                    next_state = ENUM_PARSING_STATE_WAIT_REPEAT_COUNT;
+                }
+                else
+                {
+                    next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
+                }
+            }
+            break;
+
+     	case ENUM_PARSING_STATE_WAIT_REPEAT_COUNT:
+                                    
+            Next_Repeat_Count_Set(input_byte);
+			Internal_CheckSum ^= input_byte;
+            next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
             break;
 
         case ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE:
@@ -269,7 +204,7 @@ void ProcessInputChar(uint8_t input_byte)
             }
             else
             {
-				current_cmd_status = ENUM_CMD_REPEAT_COUNT_RECEIVED;		// Repeat-Count received -- and no more
+//				current_cmd_status = ENUM_CMD_REPEAT_COUNT_RECEIVED;		// Repeat-Count received -- and no more
             	next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;				// a place/chance to signal end-of-packet here if duty-cycle is > 100 - 0xff is recommended
             }
             break;
@@ -283,7 +218,7 @@ void ProcessInputChar(uint8_t input_byte)
             }
             else
             {
-            	current_cmd_status = ENUM_CMD_REPEAT_COUNT_RECEIVED;
+//            	current_cmd_status = ENUM_CMD_REPEAT_COUNT_RECEIVED;
             	next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;				// a place/chance to signal end-of-packet here if 0xff
             }
             break;
@@ -307,7 +242,7 @@ void ProcessInputChar(uint8_t input_byte)
         	Internal_CheckSum ^= input_byte;
             if(input_byte==0xff)
             {
-            	current_cmd_status = ENUM_CMD_WIDTH_DATA_READY;
+//            	current_cmd_status = ENUM_CMD_WIDTH_DATA_READY;
             	next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
             }
             else
@@ -371,12 +306,12 @@ void ProcessInputChar(uint8_t input_byte)
             if(input_byte==0xff)
             {
                 next_state = ENUM_PARSING_STATE_WAIT_SYNC_BYTE;		// at least 0xffff to be sure
-                current_cmd_status = ENUM_CMD_IDLE;
+//                current_cmd_status = ENUM_CMD_IDLE;
             }
             else
             {
                 next_state = ENUM_PARSING_STATE_UNKNOWN_STATE;
-                current_cmd_status = ENUM_CMD_UNKNOWN;
+//                current_cmd_status = ENUM_CMD_UNKNOWN;
             }
             break;
 //
@@ -386,7 +321,7 @@ void ProcessInputChar(uint8_t input_byte)
         	Internal_CheckSum ^= input_byte;
             Next_input_parameter = input_byte;
             next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;		        // wait for checksum
-            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
+//            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
             break;
 
         case ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH:
@@ -399,7 +334,7 @@ void ProcessInputChar(uint8_t input_byte)
         	Internal_CheckSum ^= input_byte;
             Next_input_parameter = (temp_buf<<8) + input_byte;
             next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;		        // wait for checksum
-            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
+//            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
             break;
 
          case ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST:
@@ -424,7 +359,7 @@ void ProcessInputChar(uint8_t input_byte)
         	Internal_CheckSum ^= input_byte;
             Next_input_parameter = (temp_buf<<8) + input_byte;
             next_state = ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM;             // wait for checksum   
-            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
+//            current_cmd_status = ENUM_CMD_INPUT_CMD_RECEIVED;
             break;
 
         case ENUM_PARSING_STATE_WAIT_DATA_CHECKSUM:
@@ -436,7 +371,7 @@ void ProcessInputChar(uint8_t input_byte)
 
         default:
             next_state = ENUM_PARSING_STATE_UNKNOWN_STATE;  // Use to catch unknown-unknown situation
-            current_cmd_status = ENUM_CMD_UNKNOWN;
+//            current_cmd_status = ENUM_CMD_UNKNOWN;
             break;
     }
 

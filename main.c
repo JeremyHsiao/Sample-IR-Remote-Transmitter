@@ -157,39 +157,38 @@ void SYS_Init(void)
 
 void ProcessInputCommand(void)
 {
-    uint32_t repeat_cnt;
-    switch(Read_CMD_Status())
+    switch(Next_Command_Get())
     {
-        case ENUM_CMD_STOP_CMD_RECEIVED:
+        // STOP ALL
+        case ENUM_CMD_STOP_ALL:
             uart_output_enqueue_with_newline('Z');
             Set_IR_Repeat_Cnt(0);
-            Clear_CMD_Status();
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Init_Parser();
             Init_Timer_App();
             Init_IR_buffer();
             break;
 
-        case ENUM_CMD_REPEAT_COUNT_RECEIVED:
-            repeat_cnt = Next_Repeat_Count_Get();
-            Next_Repeat_Count_Set(0);
-            uart_output_enqueue('r');
-            OutputHexValue(repeat_cnt);
-            uart_output_enqueue('\n');
-            if(repeat_cnt>0)
-            {
-                uint32_t new_repeat_cnt = Get_IR_Repeat_Cnt() + repeat_cnt;
-                Set_IR_Repeat_Cnt(new_repeat_cnt);
-                IR_Transmit_Buffer_StartSend();
-            }
-            Clear_CMD_Status();
+        case ENUM_CMD_DO_NOTHING:
+            uart_output_enqueue('H');    
+            uart_output_enqueue_with_newline('I');
             break;
-            
-        case ENUM_CMD_INPUT_CMD_RECEIVED:
-            if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_ONLY)
+         
+        // Readback sensor value
+        case ENUM_CMD_GET_SENSOR_VALUE:    
+            if(compare_result)
             {
-                if(Next_Command_Get()==ENUM_CMD_GET_GPIO_INPUT)        // Read Input Port
-                {
+                 uart_output_enqueue_with_newline('1');
+            }
+            else
+            {
+                 uart_output_enqueue_with_newline('0');
+            }
+            break;
+
+        // Read back GPIO port input value
+        case ENUM_CMD_GET_GPIO_INPUT:        // Read Input Port
+            {
                     uint32_t input_data, temp_pa, temp_pb;
                     temp_pa = PA->PIN;
                     temp_pb = PB->PIN;
@@ -204,31 +203,11 @@ void ProcessInputCommand(void)
                     uart_output_enqueue('x');
                     OutputHexValue(input_data);
                     uart_output_enqueue('\n');
-                }
-                else if(Next_Command_Get()==ENUM_CMD_GET_SENSOR_VALUE)
-                {
-                    if(compare_result)
-                    {
-                         uart_output_enqueue_with_newline('L');
-                    }
-                    else
-                    {
-                         uart_output_enqueue_with_newline('l');
-                    }
-                }
-                else
-                {
-                    uart_output_enqueue_with_newline('U');
-                    OutputHexValue(Next_Command_Get());
-                    uart_output_enqueue('\n');
-                }
             }
-            else 
+            break;
+            
+        case ENUM_CMD_SET_GPIO_ALL_BIT:                 
             {
-                if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_BYTE)    // with byte input
-                {
-                    if(Next_Command_Get()==ENUM_CMD_SET_GPIO_ALL_BIT) // Output whole byte
-                    {
                         uint32_t output_data;
                         output_data = Next_Input_Parameter_Get()&0xff;
                         PA->DATMSK = ~(0xffUL);
@@ -236,72 +215,50 @@ void ProcessInputCommand(void)
                         uart_output_enqueue('P');
                         OutputHexValue(output_data);
                         uart_output_enqueue('\n');
-                    }
-                    else
-                    {
-                        uart_output_enqueue('V');
-                        OutputHexValue(Next_Input_Parameter_Get()&0xff);
-                        uart_output_enqueue('\n');
-                    }
-                }
-                else if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_WORD)
-                {
-                    if(Next_Command_Get()==ENUM_CMD_SET_GPIO_SINGLE_BIT)  // Output single bit
-                    {
-                        uint32_t output_data, bit_no, return_data;
-                        output_data = Next_Input_Parameter_Get() & 0xffff;
-                        bit_no = (output_data>>8)&0xff;
-                        output_data &= 0x01;
-                        return_data = (bit_no<<8) | output_data;
-                        PA->DATMSK = ~(1UL<<bit_no);
-                        output_data <<= bit_no;
-                        PA->DOUT = output_data;
-                        uart_output_enqueue('S');
-                        OutputHexValue(return_data);
-                        uart_output_enqueue('\n');
-                    }
-                    else
-                    {
-                        uart_output_enqueue('W');
-                        OutputHexValue(Next_Input_Parameter_Get()&0xffff);
-                        uart_output_enqueue('\n');
-                    }
-                }
-                else if(Next_Command_Get()>=CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD)
-                {
-                    if(Next_Command_Get()==ENUM_CMD_ADD_REPEAT_COUNT)        // Add repeat count (max value after added is 0xffffffff)
-                    {
-                        uint32_t output_data;
-                        output_data = Next_Input_Parameter_Get()&0xffffffff;
-                        uart_output_enqueue('r');
-                        OutputHexValue(output_data);
-                        uart_output_enqueue('\n');
-                        if(output_data>0)
-                        {
-                            uint64_t temp_cnt;
-                            temp_cnt = Get_IR_Repeat_Cnt() + output_data;
-                            if(temp_cnt>0xffffffff)
-                            {
-                                temp_cnt=0xffffffff;
-                            }
-                            Set_IR_Repeat_Cnt(temp_cnt);
-                            IR_Transmit_Buffer_StartSend();
-                        }
-                    }
-                    else
-                    {
-                        uart_output_enqueue('Y');
-                        OutputHexValue(Next_Input_Parameter_Get()&0xffffffff);
-                        uart_output_enqueue('\n');
-                    }
-                }
             }
-            Clear_CMD_Status();
+            break;
+            
+        case ENUM_CMD_SET_GPIO_SINGLE_BIT:
+            {
+                uint32_t output_data, bit_no, return_data;
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+                bit_no = (output_data>>8)&0xff;
+                output_data &= 0x01;
+                return_data = (bit_no<<4) | output_data;
+                PA->DATMSK = ~(1UL<<bit_no);
+                output_data <<= bit_no;
+                PA->DOUT = output_data;
+                uart_output_enqueue('p');
+                OutputHexValue(return_data);
+                uart_output_enqueue('\n');
+            }
             break;
 
-        case ENUM_CMD_WIDTH_DATA_READY:
-            uart_output_enqueue_with_newline('R');
-            Clear_CMD_Status();
+        // Add more Repeat Count
+        case ENUM_CMD_ADD_REPEAT_COUNT:
+            {
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get()&0xffffffff;
+                if(output_data>0)
+                {
+                    uint64_t temp_cnt;
+                    temp_cnt = Get_IR_Repeat_Cnt() + output_data;
+                    if(temp_cnt>0xffffffff)
+                    {
+                        temp_cnt=0xffffffff;
+                    }
+                    Set_IR_Repeat_Cnt(temp_cnt);
+                    IR_Transmit_Buffer_StartSend();
+                }
+                uart_output_enqueue('R');
+                OutputHexValue(output_data);
+                uart_output_enqueue('\n');
+            }
+            break;
+
+        case ENUM_CMD_INPUT_TX_SIGNAL:
+            
+            uart_output_enqueue_with_newline('T');
             Set_IR_Repeat_Cnt(0);
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
@@ -311,6 +268,9 @@ void ProcessInputCommand(void)
             break;
 
         default:
+            uart_output_enqueue_with_newline('U');
+            OutputHexValue(Next_Command_Get());
+            uart_output_enqueue('\n');
             break;
     }
 }
@@ -326,7 +286,7 @@ int main(void)
     UART_Open(UART0, 115200);
 
     printf(  "-----------------------------\n");
-    printf(  " Warm greeting by BlueRat\n");
+    printf(  " Warm greeting by BlueRat v02\n");
     printf(  " "__DATE__  "\n" );
     printf(  " "__TIME__ "\n" );
     printf(  "-----------------------------\n");
@@ -377,6 +337,7 @@ int main(void)
                     uart_output_enqueue_with_newline('?');       // Checksum error
                 }
                 Reset_CheckSum();
+                Next_Command_Clear();
             }
         }
         if(Get_IR_Tx_Finish_status())

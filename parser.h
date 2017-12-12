@@ -13,14 +13,11 @@
 #define     false   FALSE   
 #define     true    TRUE   
 
+// V02
 typedef enum {
-	ENUM_CMD_IDLE = 0,
-	ENUM_CMD_RECEIVING,
-	ENUM_CMD_STOP_CMD_RECEIVED,
-	ENUM_CMD_INPUT_CMD_RECEIVED,
-	ENUM_CMD_REPEAT_COUNT_RECEIVED,
-	ENUM_CMD_WIDTH_DATA_READY,
-	ENUM_CMD_UNKNOWN,
+    ENUM_CMD_IDLE = 0,
+	ENUM_CMD_UNKNOWN = 0xbe,
+    ENUM_CMD_INPUT_TX_SIGNAL = 0xbf,
     ENUM_CMD_ADD_REPEAT_COUNT = 0xc0,
     ENUM_CMD_CODE_0XC1 = 0xc1,
     ENUM_CMD_CODE_0XC2 = 0xc2,
@@ -82,8 +79,8 @@ typedef enum {
     ENUM_CMD_CODE_0XFA = 0xfa,
     ENUM_CMD_CODE_0XFB = 0xfb,
     ENUM_CMD_CODE_0XFC = 0xfc,
-    ENUM_CMD_CODE_0XFD = 0xfd,
-    ENUM_CMD_STOP_ALL = 0xfe,
+    ENUM_CMD_DO_NOTHING  = 0xfd,
+    ENUM_CMD_STOP_ALL    = 0xfe,
     ENUM_SYNC_BYTE_VALUE = 0xff,
     ENUM_CMD_STATE_MAX
 } ENUM_CMD_STATUS;
@@ -109,6 +106,7 @@ extern uint32_t Next_PWM_Period_Get(void);
 extern void Next_PWM_DutyCycle_Set(uint8_t new_duty_cycle);
 extern uint8_t Next_DutyCycle_Period_Get(void);
 extern uint8_t Next_Command_Get(void);
+extern void Next_Command_Clear(void);
 extern uint32_t Next_Input_Parameter_Get(void);
 
 #endif /* !_PARSER_H_ */
