@@ -40,7 +40,7 @@ typedef enum {
 static uint32_t				Next_PWM_period;
 static uint32_t				Next_PWM_duty_cycle;
 static uint8_t      		Internal_CheckSum;
-static uint8_t				Next_Repeat_Count;
+static uint32_t				Next_Repeat_Count;
 static ENUM_PARSING_STATE	current_state;
 //static ENUM_CMD_STATUS		current_cmd_status;
 static Bool					CheckSum_Read;
@@ -86,12 +86,12 @@ void Reset_CheckSum(void)
 //	current_cmd_status = ENUM_CMD_IDLE;
 //}
 
-void Next_Repeat_Count_Set(uint8_t new_cnt)
+void Next_Repeat_Count_Set(uint32_t new_cnt)
 {
 	Next_Repeat_Count = new_cnt;
 }
 
-uint8_t Next_Repeat_Count_Get(void)
+uint32_t Next_Repeat_Count_Get(void)
 {
 	return Next_Repeat_Count;
 }
@@ -173,7 +173,7 @@ void ProcessInputChar(uint8_t input_byte)
                 {
                     next_state = ENUM_PARSING_STATE_WAIT_DATA_WORD_HIGH;
                 }
-                else if (input_byte>=CMD_SEND_COMMAND_CODE_WITH_WORD)
+                else if (input_byte>=CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD)
                 {
                     next_state = ENUM_PARSING_STATE_WAIT_DATA_DWORD_1ST;
                 }

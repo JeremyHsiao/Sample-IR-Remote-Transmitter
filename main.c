@@ -237,18 +237,16 @@ void ProcessInputCommand(void)
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {
-                uint32_t output_data;
-                output_data = Next_Input_Parameter_Get()&0xffffffff;
+                uint32_t output_data = Next_Input_Parameter_Get();
                 if(output_data>0)
                 {
-                    uint64_t temp_cnt;
-                    temp_cnt = Get_IR_Repeat_Cnt() + output_data;
+                    uint64_t temp_cnt = Get_IR_Repeat_Cnt();
+                    temp_cnt += output_data;
                     if(temp_cnt>0xffffffff)
                     {
                         temp_cnt=0xffffffff;
                     }
-                    Set_IR_Repeat_Cnt(temp_cnt);
-                    IR_Transmit_Buffer_StartSend();
+                    Set_IR_Repeat_Cnt((uint32_t)temp_cnt);
                 }
                 uart_output_enqueue('R');
                 OutputHexValue(output_data);
