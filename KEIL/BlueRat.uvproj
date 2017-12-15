@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>Uart</TargetName>
+      <TargetName>BlueRat</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
@@ -47,7 +47,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\obj\</OutputDirectory>
-          <OutputName>Uart</OutputName>
+          <OutputName>BlueRat</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -373,7 +373,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_ENABLE_SEMIHOST_, ENABLE_WATCH_DOG_TIMER</Define>
+              <Define>DEBUG_ENABLE_SEMIHOST_, ENABLE_WATCH_DOG_TIMER_</Define>
               <Undefine></Undefine>
               <IncludePath>..\Library\CMSIS\Include;..\Library\Device\Nuvoton\N575\Include;..\Library\StdDriver\inc</IncludePath>
             </VariousControls>
@@ -508,6 +508,11 @@
               <FileName>acmp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Library\StdDriver\src\acmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>fmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Library\StdDriver\src\fmc.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -21,6 +21,7 @@
 
 uint8_t	    IR_Transmitter_Running;
 uint8_t	    IR_Finish_Tx_one_RC;
+uint8_t	    IR_Finish_Tx_ALL_RC;
 uint32_t    IR_Repeat_Cnt;
 uint32_t	PWM_period;
 uint32_t	PWM_duty_cycle;
@@ -39,6 +40,7 @@ void Init_Timer_App(void)
 {
     IR_Transmitter_Running = 0;
     IR_Finish_Tx_one_RC = 0;
+    IR_Finish_Tx_ALL_RC = 0;
     IR_Repeat_Cnt = 0;
     PWM_period =  (uint32_t) (1000000/(38000));		// For 38KHz PWM pulse
     PWM_duty_cycle = 33;
@@ -63,6 +65,16 @@ void Clear_IR_Tx_Finish(void)
 uint8_t Get_IR_Tx_Finish_status(void)
 {
     return IR_Finish_Tx_one_RC;
+}
+
+void Clear_IR_Tx_All_Finish(void)
+{
+    IR_Finish_Tx_ALL_RC = 0;
+}
+
+uint8_t Get_IR_Tx_Finish_All_status(void)
+{
+    return IR_Finish_Tx_ALL_RC;
 }
 
 void Restart_IR_Pulse(void)
@@ -144,6 +156,7 @@ void TMR0_IRQHandler(void)
             TIMER_Stop(WIDTH_TIMER);
             TIMER_DisableInt(WIDTH_TIMER);
             Restart_IR_Pulse();
+            IR_Finish_Tx_ALL_RC = 1;
         }
         IR_Finish_Tx_one_RC = 1;
     }

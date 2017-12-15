@@ -17,6 +17,7 @@
 #include "parser.h"
 #include "timer_app.h"
 #include "acmp.h"
+#include "fmc.h"
 
 extern void WDT_MySetup(void);
 extern void WDT_MyClearTimeOutIntFlag(void);
@@ -192,11 +193,12 @@ void ProcessInputCommand(void)
                     uint32_t input_data, temp_pa, temp_pb;
                     temp_pa = PA->PIN;
                     temp_pb = PB->PIN;
-                    temp_pb &= 0x83; // keep PB7/PB1/PB0
+                    temp_pb &= 0x82; // keep PB7/PB1
                     if(temp_pb&0x80)
                     {
-                        input_data = (temp_pb & 0x03) | (1<<2);
+                        input_data = (temp_pb & 0x2) | 0x04;
                     }
+                    input_data = temp_pb>>1;
                     temp_pa &= 0xcc00; // keep PA15/PA14/PA11/PA10
                     input_data = (input_data<<4) | ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
                     uart_output_enqueue('0');
@@ -273,11 +275,54 @@ void ProcessInputCommand(void)
     }
 }
 
+void CheckIfISP(void)
+{
+    if(((PB->PIN)&0x1)==0) 
+    {
+        uint32_t   au32Config[1] = { 0xffffffff };
+
+//        FMC_Open();
+//        
+//        // Read Config
+//        if (FMC_ReadConfig(au32Config, 1) < 0) {
+//            printf("\nRead User Config failed!\n");
+//            return;
+//        }
+
+//        if ((au32Config[0] & (1UL<<1))==0)
+//        {
+//            printf("\nSecurity Bit is locked thus cannot update application!\n");
+//            return;
+//        }
+
+//        //
+//        if ( (au32Config[0]&(1UL<<7))==0 ) 
+//        {
+//            printf("\nNo need to update config bit!\n");
+//            return;
+//        }
+        
+        // Enable LDROM and boot-from-LDROM then Write Config
+        FMC_EnableConfigUpdate();
+        au32Config[0] &= ~(1UL<<7);      // 0: boot from LDROM
+        if (FMC_WriteConfig(au32Config, 1) < 0)
+            return;
+
+        FMC_DisableConfigUpdate();
+//        FMC_Close();
+        
+        // Perform chip reset to make new User Config take effect
+        SYS->IPRST0 = SYS_IPRST0_CHIPRST_Msk;
+    }
+}
+
 /* Main */
 int main(void)
 {
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
+    CheckIfISP();
+
     UART_init();
 
     /* Init UART to 115200-8n1 for print message */
@@ -338,10 +383,16 @@ int main(void)
                 Next_Command_Clear();
             }
         }
+        
         if(Get_IR_Tx_Finish_status())
         {
             Clear_IR_Tx_Finish();
             uart_output_enqueue_with_newline('+');               // Tx finish one-time
+        }
+        if(Get_IR_Tx_Finish_All_status())
+        {
+            Clear_IR_Tx_All_Finish();
+            uart_output_enqueue_with_newline('S');               // Tx finish and currently no more to send
         }
 #ifdef ENABLE_WATCH_DOG_TIMER
         WDT_ResetCounter();
