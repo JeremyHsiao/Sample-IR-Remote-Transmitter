@@ -10,6 +10,7 @@
 #include "N575.h"
 #include "buffer.h"
 #include "parser.h"
+#include "cmd_proc.h"
 
 typedef enum {
     ENUM_PARSING_STATE_WAIT_SYNC_BYTE = 0,				 // Also initial state
