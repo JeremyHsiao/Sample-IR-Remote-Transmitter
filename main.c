@@ -64,7 +64,8 @@ void SYS_Init(void)
     CLK_EnableModuleClock(TMR0_MODULE);
     CLK_EnableModuleClock(WDT_MODULE);
     CLK_EnableModuleClock(ACMP_MODULE);	
-
+    CLK_EnableModuleClock(ISP_MODULE);
+    
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
@@ -137,14 +138,14 @@ void SYS_Init(void)
     GPIO_SetMode(PA, BIT15, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT1, GPIO_MODE_QUASI);
-    //GPIO_SetMode(PB, BIT7, GPIO_MODE_QUASI);
-    GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
+    GPIO_SetMode(PB, BIT7, GPIO_MODE_QUASI);
+    //GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
     // Set output as 1 for all Quasi-bidirectional mode GPIO
     PA->DATMSK = ~(GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
     PA->DOUT = (GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
     PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
-    PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
-    //PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    //PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
 
     SYS_ResetModule(PWM0_RST);
     SYS_ResetModule(UART0_RST);
@@ -275,44 +276,38 @@ void ProcessInputCommand(void)
     }
 }
 
+void EnterISP(void)
+{
+        uint32_t   au32Config[4] = {0xffffff7f,0xffffffff,0xfffffff,0xffffffff};
+
+        printf(  "\nEntering Software update mode.\n" );
+        printf(  "Please disconnet all UART connection and then connect to Software update tool.\n\n");
+        SYS_UnlockReg();
+       	FMC_Open();
+        FMC_EnableConfigUpdate();
+        FMC_WriteConfig(au32Config,4);
+        FMC_DisableConfigUpdate();
+        FMC_SetBootSource(1);     
+        SYS_LockReg();
+        // Restart system after ISP jumper removed
+        SYS_UnlockReg();
+        FMC->ISPCTL |= FMC_ISPCTL_SWRST_Msk;
+        SYS_ResetChip();    
+        SYS_LockReg();
+}
+
 void CheckIfISP(void)
 {
-    if(((PB->PIN)&0x1)==0) 
+    // If booting from LDROM, no need to check ISP pin
+    //if(FMC_GetBootSource()==1)
+    //{
+    //    return;     
+    //}
+
+    // PB0 is low --> Enter ISP
+    if(((PB->PIN)&BIT0)==0) 
     {
-        uint32_t   au32Config[1] = { 0xffffffff };
-
-//        FMC_Open();
-//        
-//        // Read Config
-//        if (FMC_ReadConfig(au32Config, 1) < 0) {
-//            printf("\nRead User Config failed!\n");
-//            return;
-//        }
-
-//        if ((au32Config[0] & (1UL<<1))==0)
-//        {
-//            printf("\nSecurity Bit is locked thus cannot update application!\n");
-//            return;
-//        }
-
-//        //
-//        if ( (au32Config[0]&(1UL<<7))==0 ) 
-//        {
-//            printf("\nNo need to update config bit!\n");
-//            return;
-//        }
-        
-        // Enable LDROM and boot-from-LDROM then Write Config
-        FMC_EnableConfigUpdate();
-        au32Config[0] &= ~(1UL<<7);      // 0: boot from LDROM
-        if (FMC_WriteConfig(au32Config, 1) < 0)
-            return;
-
-        FMC_DisableConfigUpdate();
-//        FMC_Close();
-        
-        // Perform chip reset to make new User Config take effect
-        SYS->IPRST0 = SYS_IPRST0_CHIPRST_Msk;
+        EnterISP(); // system will enter LDROM afterward
     }
 }
 
@@ -321,12 +316,11 @@ int main(void)
 {
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
-    CheckIfISP();
-
     UART_init();
-
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
+
+    CheckIfISP();
 
     printf(  "-----------------------------\n");
     printf(  " Warm greeting by BlueRat v02\n");
