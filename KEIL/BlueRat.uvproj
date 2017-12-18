@@ -437,32 +437,32 @@
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\main.c</FilePath>
+              <FilePath>..\BlueRat\main.c</FilePath>
             </File>
             <File>
               <FileName>buffer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\buffer.c</FilePath>
+              <FilePath>..\BlueRat\buffer.c</FilePath>
             </File>
             <File>
               <FileName>parser.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\parser.c</FilePath>
+              <FilePath>..\BlueRat\parser.c</FilePath>
             </File>
             <File>
               <FileName>uart_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\uart_app.c</FilePath>
+              <FilePath>..\BlueRat\uart_app.c</FilePath>
             </File>
             <File>
               <FileName>timer_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\timer_app.c</FilePath>
+              <FilePath>..\BlueRat\timer_app.c</FilePath>
             </File>
             <File>
               <FileName>cmd_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\cmd_proc.c</FilePath>
+              <FilePath>..\BlueRat\cmd_proc.c</FilePath>
             </File>
           </Files>
         </Group>
