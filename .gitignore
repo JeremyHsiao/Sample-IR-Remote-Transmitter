@@ -94,3 +94,5 @@ KEIL/Uart.uvopt
 *.TMP
 KEIL/BlueRat.uvgui.jeremy.hsiao
 KEIL/BlueRat.uvopt
+KEIL/LDROM_ISP N575x145.uvgui.jeremy.hsiao
+KEIL/LDROM_ISP N575x145.uvopt

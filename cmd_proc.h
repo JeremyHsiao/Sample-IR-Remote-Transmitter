@@ -28,7 +28,7 @@ typedef enum {
     ENUM_CMD_CODE_0XCC = 0xcc,
     ENUM_CMD_CODE_0XCD = 0xcd,
     ENUM_CMD_CODE_0XCE = 0xce,
-    ENUM_CMD_CODE_0XCF = 0xcf,
+    ENUM_CMD_ENTER_ISP_MODE = 0xcf,
     ENUM_CMD_SET_GPIO_SINGLE_BIT = 0xd0,
     ENUM_CMD_CODE_0XD1 = 0xd1,
     ENUM_CMD_CODE_0XD2 = 0xd2,

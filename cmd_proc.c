@@ -20,7 +20,50 @@
 #include "fmc.h"
 #include "cmd_proc.h"
 
+#define ISP_PASSWORD  (0x46574154)     // input password is FWAT for entering ISP  
+
 uint8_t compare_result;
+
+void EnterISP(void)
+{
+        //uint32_t   au32Config[4] = {0xffffff7f,0xffffffff,0xfffffff,0xffffffff};
+        uint32_t sleep_time = 100000;
+
+        Set_IR_Repeat_Cnt(0);
+        Init_Parser();
+        Init_Timer_App();
+        Init_IR_buffer();
+
+        printf(  "\nEntering Software update mode.\n" );
+        printf(  "Please close Autobox Application and then connect to Software update tool.\n\n");
+        while(sleep_time-->0){}     // Delay for message
+        SYS_UnlockReg();
+       	FMC_Open();
+//        FMC_EnableConfigUpdate();
+//        FMC_WriteConfig(au32Config,4);
+//        FMC_DisableConfigUpdate();
+        FMC_SetBootSource(1);     
+        //SYS_LockReg();
+        // Restart system after ISP jumper removed
+        //SYS_UnlockReg();
+        SYS_ResetCPU();    
+        SYS_LockReg();
+}
+
+void CheckIfISP(void)
+{
+    // If booting from LDROM, no need to check ISP pin
+    //if(FMC_GetBootSource()==1)
+    //{
+    //    return;     
+    //}
+
+    // PB0 is low --> Enter ISP
+    if(((PB->PIN)&BIT0)==0) 
+    {
+        EnterISP(); // system will enter LDROM afterward
+    }
+}
 
 void ProcessInputCommand(void)
 {
@@ -121,6 +164,24 @@ void ProcessInputCommand(void)
                 uart_output_enqueue('\n');
             }
             break;
+            
+        case ENUM_CMD_ENTER_ISP_MODE:
+            {
+                uint32_t output_data = Next_Input_Parameter_Get();
+                
+                if(output_data==ISP_PASSWORD)     
+                {
+                    EnterISP();
+                }
+                else
+                {
+                    uart_output_enqueue_with_newline('U');
+                    OutputHexValue(Next_Command_Get());
+                    uart_output_enqueue('\n');
+                }
+            }
+            break;
+            
 
         case ENUM_CMD_INPUT_TX_SIGNAL:
             
@@ -138,41 +199,6 @@ void ProcessInputCommand(void)
             OutputHexValue(Next_Command_Get());
             uart_output_enqueue('\n');
             break;
-    }
-}
-
-void EnterISP(void)
-{
-        uint32_t   au32Config[4] = {0xffffff7f,0xffffffff,0xfffffff,0xffffffff};
-
-        printf(  "\nEntering Software update mode.\n" );
-        printf(  "Please disconnet all UART connection and then connect to Software update tool.\n\n");
-        SYS_UnlockReg();
-       	FMC_Open();
-        FMC_EnableConfigUpdate();
-        FMC_WriteConfig(au32Config,4);
-        FMC_DisableConfigUpdate();
-        FMC_SetBootSource(1);     
-        SYS_LockReg();
-        // Restart system after ISP jumper removed
-        SYS_UnlockReg();
-        FMC->ISPCTL |= FMC_ISPCTL_SWRST_Msk;
-        SYS_ResetChip();    
-        SYS_LockReg();
-}
-
-void CheckIfISP(void)
-{
-    // If booting from LDROM, no need to check ISP pin
-    //if(FMC_GetBootSource()==1)
-    //{
-    //    return;     
-    //}
-
-    // PB0 is low --> Enter ISP
-    if(((PB->PIN)&BIT0)==0) 
-    {
-        EnterISP(); // system will enter LDROM afterward
     }
 }
 
