@@ -33,10 +33,11 @@ void EnterISP(void)
         Init_Parser();
         Init_Timer_App();
         Init_IR_buffer();
-
+    
         printf(  "\nEntering Software update mode.\n" );
         printf(  "Please close Autobox Application and then connect to Software update tool.\n\n");
-        while(sleep_time-->0){}     // Delay for message
+        while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
+        WDT_Close();
         SYS_UnlockReg();
        	FMC_Open();
 //        FMC_EnableConfigUpdate();
