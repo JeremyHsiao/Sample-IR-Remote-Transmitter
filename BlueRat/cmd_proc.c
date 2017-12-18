@@ -27,16 +27,18 @@ uint8_t compare_result;
 void EnterISP(void)
 {
         //uint32_t   au32Config[4] = {0xffffff7f,0xffffffff,0xfffffff,0xffffffff};
-        uint32_t sleep_time = 100000;
+        uint32_t sleep_time = 1000;
 
         Set_IR_Repeat_Cnt(0);
+        printf("\nISP\n" );    
+        while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
         Init_Parser();
         Init_Timer_App();
         Init_IR_buffer();
     
-        printf(  "\nEntering Software update mode.\n" );
-        printf(  "Please close Autobox Application and then connect to Software update tool.\n\n");
-        while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
+        //printf(  "\nEntering Software update mode.\n" );
+        //printf(  "Please close Autobox Application and then connect to Software update tool.\n\n");
+        //while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
         WDT_Close();
         SYS_UnlockReg();
        	FMC_Open();
