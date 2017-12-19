@@ -226,7 +226,7 @@ int main(void)
         if(Get_IR_Tx_Finish_status())
         {
             Clear_IR_Tx_Finish();
-            uart_output_enqueue_with_newline('+');               // Tx finish one-time
+            //uart_output_enqueue_with_newline('+');               // Tx finish one-time
         }
         if(Get_IR_Tx_Finish_All_status())
         {

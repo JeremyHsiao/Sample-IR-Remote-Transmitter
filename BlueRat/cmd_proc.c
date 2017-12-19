@@ -74,7 +74,7 @@ void ProcessInputCommand(void)
     {
         // STOP ALL
         case ENUM_CMD_STOP_ALL:
-            uart_output_enqueue_with_newline('Z');
+            //uart_output_enqueue_with_newline('Z');
             Set_IR_Repeat_Cnt(0);
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Init_Parser();
@@ -102,17 +102,24 @@ void ProcessInputCommand(void)
         // Read back GPIO port input value
         case ENUM_CMD_GET_GPIO_INPUT:        // Read Input Port
             {
+                    // PB7/PB1/PA15/PA14/PA11/PA10
                     uint32_t input_data, temp_pa, temp_pb;
                     temp_pa = PA->PIN;
                     temp_pb = PB->PIN;
-                    temp_pb &= 0x82; // keep PB7/PB1
-                    if(temp_pb&0x80)
+                    if(temp_pb & 0x2)               // PB1
+                    { 
+                        input_data = 0x10;
+                    } 
+                    else 
+                    { 
+                        input_data = 0x0; 
+                    } 
+                    if(temp_pb&0x80)                // PB7
                     {
-                        input_data = (temp_pb & 0x2) | 0x04;
+                        input_data |= 0x20;
                     }
-                    input_data = temp_pb>>1;
                     temp_pa &= 0xcc00; // keep PA15/PA14/PA11/PA10
-                    input_data = (input_data<<4) | ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
+                    input_data |= ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
                     uart_output_enqueue('0');
                     uart_output_enqueue('x');
                     OutputHexValue(input_data);
@@ -126,9 +133,9 @@ void ProcessInputCommand(void)
                         output_data = Next_Input_Parameter_Get()&0xff;
                         PA->DATMSK = ~(0xffUL);
                         PA->DOUT = output_data;
-                        uart_output_enqueue('P');
-                        OutputHexValue(output_data);
-                        uart_output_enqueue('\n');
+                        //uart_output_enqueue('P');
+                        //OutputHexValue(output_data);
+                        //uart_output_enqueue('\n');
             }
             break;
             
@@ -142,9 +149,9 @@ void ProcessInputCommand(void)
                 PA->DATMSK = ~(1UL<<bit_no);
                 output_data <<= bit_no;
                 PA->DOUT = output_data;
-                uart_output_enqueue('p');
-                OutputHexValue(return_data);
-                uart_output_enqueue('\n');
+                //uart_output_enqueue('p');
+                //OutputHexValue(return_data);
+                //uart_output_enqueue('\n');
             }
             break;
 
@@ -162,9 +169,9 @@ void ProcessInputCommand(void)
                     }
                     Set_IR_Repeat_Cnt((uint32_t)temp_cnt);
                 }
-                uart_output_enqueue('R');
-                OutputHexValue(output_data);
-                uart_output_enqueue('\n');
+                //uart_output_enqueue('R');
+                //OutputHexValue(output_data);
+                //uart_output_enqueue('\n');
             }
             break;
             
@@ -178,9 +185,9 @@ void ProcessInputCommand(void)
                 }
                 else
                 {
-                    uart_output_enqueue_with_newline('U');
-                    OutputHexValue(Next_Command_Get());
-                    uart_output_enqueue('\n');
+                    //uart_output_enqueue_with_newline('U');
+                    //OutputHexValue(Next_Command_Get());
+                    //uart_output_enqueue('\n');
                 }
             }
             break;
@@ -188,7 +195,7 @@ void ProcessInputCommand(void)
 
         case ENUM_CMD_INPUT_TX_SIGNAL:
             
-            uart_output_enqueue_with_newline('T');
+            //uart_output_enqueue_with_newline('T');
             Set_IR_Repeat_Cnt(0);
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
             Set_IR_Repeat_Cnt(Next_Repeat_Count_Get());
@@ -198,9 +205,9 @@ void ProcessInputCommand(void)
             break;
 
         default:
-            uart_output_enqueue_with_newline('U');
-            OutputHexValue(Next_Command_Get());
-            uart_output_enqueue('\n');
+            //uart_output_enqueue_with_newline('U');
+            //OutputHexValue(Next_Command_Get());
+            //uart_output_enqueue('\n');
             break;
     }
 }
