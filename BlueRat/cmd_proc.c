@@ -19,6 +19,7 @@
 #include "acmp.h"
 #include "fmc.h"
 #include "cmd_proc.h"
+#include "version.h"
 
 #define ISP_PASSWORD  (0x46574154)     // input password is FWAT for entering ISP  
 
@@ -129,13 +130,13 @@ void ProcessInputCommand(void)
             
         case ENUM_CMD_SET_GPIO_ALL_BIT:                 
             {
-                        uint32_t output_data;
-                        output_data = Next_Input_Parameter_Get()&0xff;
-                        PA->DATMSK = ~(0xffUL);
-                        PA->DOUT = output_data;
-                        //uart_output_enqueue('P');
-                        //OutputHexValue(output_data);
-                        //uart_output_enqueue('\n');
+                    uint32_t output_data;
+                    output_data = Next_Input_Parameter_Get()&0xff;
+                    PA->DATMSK = ~(0xffUL);
+                    PA->DOUT = output_data;
+                    //uart_output_enqueue('P');
+                    //OutputHexValue(output_data);
+                    //uart_output_enqueue('\n');
             }
             break;
             
@@ -191,10 +192,8 @@ void ProcessInputCommand(void)
                 }
             }
             break;
-            
 
         case ENUM_CMD_INPUT_TX_SIGNAL:
-            
             //uart_output_enqueue_with_newline('T');
             Set_IR_Repeat_Cnt(0);
             while(Get_IR_Tx_running_status()) {}        // Wait until previous Tx Finish
@@ -204,6 +203,24 @@ void ProcessInputCommand(void)
             Copy_Input_Data_to_Tx_Data_and_Start();
             break;
 
+        case ENUM_CMD_RETURN_SW_VER:
+            OutputString_with_newline(_SW_VERSION);
+            break;
+        case ENUM_CMD_RETURN_BUILD_TIME:
+            OutputString_with_newline(__DATE__);
+            OutputString_with_newline(__TIME__);
+            break;
+        case ENUM_CMD_RETURN_CMD_VERSION:
+            OutputHexValue(ENUM_CMD_VERSION_CURRENT_PLUS_1-1);
+            uart_output_enqueue('\n');
+            break;
+        case ENUM_CMD_GET_TX_RUNNING_STATUS:
+            OutputHexValue(Get_IR_Tx_running_status());
+            break;
+        case ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT:
+            OutputHexValue(Get_IR_Repeat_Cnt());
+            break;
+                
         default:
             //uart_output_enqueue_with_newline('U');
             //OutputHexValue(Next_Command_Get());

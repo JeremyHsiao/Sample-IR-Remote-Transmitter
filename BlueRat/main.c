@@ -3,10 +3,10 @@
  * @version  V1.00
  * $Revision: 1 $
  * $Date: 14/07/17 10:00p $
- * @brief    Uart driver demo sample.
+ * @brief    
  *
  * @note
- * Copyright (C) 2014 Nuvoton Technology Corp. All rights reserved.
+ * 
  *
  ******************************************************************************/
 #include <stdio.h>
@@ -19,6 +19,7 @@
 #include "acmp.h"
 #include "fmc.h"
 #include "cmd_proc.h"
+#include "version.h"
 
 extern void WDT_MySetup(void);
 extern void WDT_MyClearTimeOutIntFlag(void);
@@ -167,11 +168,11 @@ int main(void)
 
     CheckIfISP();
 
-    printf(  "-----------------------------\n");
-    printf(  " Warm greeting by BlueRat v02\n");
-    printf(  " "__DATE__  "\n" );
-    printf(  " "__TIME__ "\n" );
-    printf(  "-----------------------------\n");
+    printf(  "\n-----------------------------\n");
+    printf(    " Warm greeting by BlueRat\n");
+    printf(    " FW Version: v"  _SW_VERSION "\n" );
+    printf(    " "__DATE__"  "__TIME__"\n" );
+    printf(    "-----------------------------\n");
 	
     Initialize_buffer();
     Init_Parser();    
@@ -226,7 +227,7 @@ int main(void)
         if(Get_IR_Tx_Finish_status())
         {
             Clear_IR_Tx_Finish();
-            //uart_output_enqueue_with_newline('+');               // Tx finish one-time
+            uart_output_enqueue_with_newline('+');             // Tx finish one-time
         }
         if(Get_IR_Tx_Finish_All_status())
         {

@@ -74,6 +74,21 @@ void OutputHexValue(uint32_t value)
         uart_output_enqueue(temp_str[temp_index]);
 }
 
+int OutputString_with_newline(char *str)
+{
+    int return_value = 0;
+    while(*str!='\0')
+    {
+        uart_output_enqueue(*str);
+        str++;
+        return_value++;
+    }
+    uart_output_enqueue('\n');
+    return_value++;
+    
+    return return_value;
+}
+
 void UART0_IRQHandler(void)
 {
   // Tx when FIFO is empty - interrupt occurs less than using FIFO is not full
