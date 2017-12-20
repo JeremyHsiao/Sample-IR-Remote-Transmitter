@@ -218,13 +218,15 @@ void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32D
     #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
     #define  u8Prescale     (48)        // Can be 2~256
     uint16_t u16CNR;            
+    uint32_t temp;
         
-    // every two channels share a prescaler
+    // every two channels share the same prescaler
     (pwm)->CLKPSC = (((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk)) | (u8Prescale-1));   // pre-scaler must -1
     // Setup clock divider
-    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk*0x11UL)) | (u32PWMDividerToRegTbl[u8Divider]*0x11UL);// LUT for divider
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk)) | (u32PWMDividerToRegTbl[u8Divider]<<PWM_CLKDIV_CLKDIV0_Pos);    
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV1_Msk)) | (u32PWMDividerToRegTbl[u8Divider]<<PWM_CLKDIV_CLKDIV1_Pos);// LUT for divider
     // Setup auto-reload mode 
-    (pwm)->CTL = (PWM_CTL_CNTMODE0_Msk*0x101UL);
+    (pwm)->CTL = (PWM_CTL_CNTMODE0_Msk|PWM_CTL_CNTMODE1_Msk);
     u16CNR = (((u32PWMClockSrc/u8Divider)/u8Prescale)/u32Frequency);   
     // load value    
     PWM_SetOutputPulse_v2(pwm,u16CNR,u32DutyCycle);
@@ -264,7 +266,7 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = width;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1))))) = temp_CMP - 1;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD1))))) = width;
-        (pwm)->CTL &= ~(PWM_CTL_PINV0_Msk*0x101UL);      // No Inverting
+        (pwm)->CTL &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk);      // No Inverting
     }
     else
     {
@@ -272,7 +274,7 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = width;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1)))))  = width;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD1))))) = width;
-        (pwm)->CTL |= (PWM_CTL_PINV0_Msk*0x101UL);       // Inverting
+        (pwm)->CTL |= (PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk);       // Inverting
     }
 }
 
@@ -302,7 +304,7 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
 void PWM_Start_v2(PWM_T *pwm)
 {
     uint32_t u32Mask;
-    u32Mask = (PWM_CTL_CNTEN0_Msk &0x101);
+    u32Mask = (PWM_CTL_CNTEN0_Msk | PWM_CTL_CNTEN1_Msk);  // for both PWM
 //    u32Mask = (PWM_CTL_CNTEN0_Msk &0x100);
 
     (pwm)->CTL |= u32Mask;
