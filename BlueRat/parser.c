@@ -187,7 +187,7 @@ void ProcessInputChar(uint8_t input_byte)
                     //next_state = ENUM_PARSING_STATE_WAIT_CHECKSUM;
                     Next_Command = ENUM_CMD_INPUT_TX_SIGNAL;
                     Next_Repeat_Count_Set(input_byte);
-                    Internal_CheckSum ^= input_byte;
+                    //Internal_CheckSum ^= input_byte;
                     next_state = ENUM_PARSING_STATE_WAIT_PWN_DUTY_CYCLE;
                 }
             }
