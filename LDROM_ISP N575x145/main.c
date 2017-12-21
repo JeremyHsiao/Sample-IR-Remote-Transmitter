@@ -417,6 +417,11 @@ void SYS_Init(void)
 	SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA8MFP_Msk) ) | SYS_GPA_MFP_PA8MFP_UART_TX;
 	SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA9MFP_Msk) ) | SYS_GPA_MFP_PA9MFP_UART_RX;
 #endif
+
+	SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB0MFP_Msk) ) | SYS_GPB_MFP_PB0MFP_GPIO;
+
+    GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
+
     /* Lock protected registers */
     SYS_LockReg();
 }
@@ -472,10 +477,9 @@ int main(void)
     UART_Init();
 //#endif
 
-/*
-	if(ISP_PIN)//SW 1003
+    // if(ISP_PIN) //SW 1003
+	if((ISP_PIN)&&(!SYS_IS_CPU_RST()))      // Not return to APROM (i.e. enter ISP mode) when (PB0 is high) and boot due to CPU RESET (from FMC) is low OR was boot from APROM
 		goto _APROMBOOT;
-*/	
 
 #if defined(USING_AUTODETECT)
     //timeout 30ms
@@ -556,13 +560,29 @@ _ISP:
 	}
 		
 /*SW 1003*/
-/*
+
 _APROMBOOT:	
-	SYS_UnlockReg();
-	FMC_EnableConfigUpdate();
-	FMC_WriteConfig(u32Config,4);	
-	SYS_ResetChip();
-*/	
+//	SYS_UnlockReg();
+//	FMC_EnableConfigUpdate();
+//	FMC_WriteConfig(u32Config,4);	
+//	SYS_ResetChip();
+       	//FMC_Open();
+        //FMC_SetBootSource(0);   // Boot from APROM     
+        //FMC->ISPCTL |= FMC_ISPCTL_SWRST_Msk;    // Software RESET
+        //SYS_LockReg();
+
+        SYS_UnlockReg();
+        //SYS_ClearResetSrc(SYS_RSTSTS_CPURF_Msk);
+		outpw(&SYS->RSTSTS, 3);//clear bit
+		outpw(&FMC->ISPCTL, (inpw(&FMC->ISPCTL) & 0xFFFFFFFC));
+		outpw(&SCB->AIRCR, (V6M_AIRCR_VECTKEY_DATA | V6M_AIRCR_SYSRESETREQ));
+        SYS_LockReg();
+        
+		/* Trap the CPU */
+		while(1);
+
+
+
 }
 
 /*** (C) COPYRIGHT 2014 Nuvoton Technology Corp. ***/
