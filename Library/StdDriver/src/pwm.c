@@ -218,7 +218,7 @@ void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32D
     #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
     #define  u8Prescale     (48)        // Can be 2~256
     uint16_t u16CNR;            
-    uint32_t temp;
+//    uint32_t temp;
         
     // every two channels share the same prescaler
     (pwm)->CLKPSC = (((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk)) | (u8Prescale-1));   // pre-scaler must -1
