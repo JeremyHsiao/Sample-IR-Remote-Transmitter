@@ -28,11 +28,11 @@ uint8_t compare_result;
 void EnterISP(void)
 {
         //uint32_t   au32Config[4] = {0xffffff7f,0xffffffff,0xfffffff,0xffffffff};
-        uint32_t sleep_time = 1000;
+        //uint32_t sleep_time = 1000;
 
         Set_IR_Repeat_Cnt(0);
-        printf("\nISP\n" );    
-        while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
+        //printf("\nISP\n" );    
+        //while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
         Init_Parser();
         Init_Timer_App();
         Init_IR_buffer();
@@ -142,11 +142,11 @@ void ProcessInputCommand(void)
             
         case ENUM_CMD_SET_GPIO_SINGLE_BIT:
             {
-                uint32_t output_data, bit_no, return_data;
+                uint32_t output_data, bit_no; //, return_data;
                 output_data = Next_Input_Parameter_Get() & 0xffff;
                 bit_no = (output_data>>8)&0xff;
                 output_data &= 0x01;
-                return_data = (bit_no<<4) | output_data;
+                //return_data = (bit_no<<4) | output_data;
                 PA->DATMSK = ~(1UL<<bit_no);
                 output_data <<= bit_no;
                 PA->DOUT = output_data;

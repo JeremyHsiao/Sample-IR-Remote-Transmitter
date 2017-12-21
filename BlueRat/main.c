@@ -166,7 +166,7 @@ int main(void)
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
 
-    CheckIfISP();
+    //CheckIfISP();
 
     printf(  "\n-----------------------------\n");
     printf(    " Warm greeting by BlueRat\n");
