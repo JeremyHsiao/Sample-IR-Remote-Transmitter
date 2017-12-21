@@ -478,9 +478,24 @@ int main(void)
 //#endif
 
     // if(ISP_PIN) //SW 1003
-	if((ISP_PIN)&&(!SYS_IS_CPU_RST()))      // Not return to APROM (i.e. enter ISP mode) when (PB0 is high) and boot due to CPU RESET (from FMC) is low OR was boot from APROM
+    // Not return to APROM (i.e. enter ISP mode) when (PB0 is high) && not boot from FMC reset (caused by entering ISP from APROM)
+	if((ISP_PIN)&&(!SYS_IS_CPU_RST()))      
 		goto _APROMBOOT;
 
+    // Print LDROM message
+    {
+        int i;
+        char LDROM_MESSAGE[] = "\nISP01\n";
+        for(i = 0; i<sizeof(LDROM_MESSAGE); i++)
+        {
+            while(((UART0->FIFOSTS & UART_FIFOSTS_TXPTR_Msk)>>UART_FIFOSTS_TXPTR_Pos)/*g_pUART->FSR.TX_POINTER*/ >= 6);
+            //while(g_pUART->FSR.TX_EMPTY == 0);
+            UART0 -> DAT/*g_pUART->DATA*/ = LDROM_MESSAGE[i];
+        }
+        i = 1000;
+        while(i-->0){}     // Delay for message
+    }
+    
 #if defined(USING_AUTODETECT)
     //timeout 30ms
     SysTick->LOAD = 30000 * 48; /* using 48MHz cpu clock*/
