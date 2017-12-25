@@ -74,7 +74,7 @@ void OutputHexValue(uint32_t value)
         uart_output_enqueue(temp_str[temp_index]);
 }
 
-int OutputString_with_newline(char *str)
+int OutputString(char *str)
 {
     int return_value = 0;
     while(*str!='\0')
@@ -83,6 +83,14 @@ int OutputString_with_newline(char *str)
         str++;
         return_value++;
     }
+    
+    return return_value;
+}
+
+int OutputString_with_newline(char *str)
+{
+    int return_value = 0;
+    return_value = OutputString(str);
     uart_output_enqueue('\n');
     return_value++;
     

@@ -83,9 +83,8 @@ void ProcessInputCommand(void)
             Init_IR_buffer();
             break;
 
-        case ENUM_CMD_DO_NOTHING:
-            uart_output_enqueue('H');    
-            uart_output_enqueue_with_newline('I');
+        case ENUM_CMD_SAY_HI:
+            OutputString_with_newline("HI");
             break;
          
         // Readback sensor value
@@ -121,8 +120,7 @@ void ProcessInputCommand(void)
                     }
                     temp_pa &= 0xcc00; // keep PA15/PA14/PA11/PA10
                     input_data |= ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
-                    uart_output_enqueue('0');
-                    uart_output_enqueue('x');
+                    OutputString("IN:0x");
                     OutputHexValue(input_data);
                     uart_output_enqueue('\n');
             }
@@ -207,18 +205,21 @@ void ProcessInputCommand(void)
             OutputString_with_newline(_SW_VERSION);
             break;
         case ENUM_CMD_RETURN_BUILD_TIME:
-            OutputString_with_newline(__DATE__);
-            OutputString_with_newline(__TIME__);
+            OutputString_with_newline(__DATE__ "  " __TIME__);
             break;
         case ENUM_CMD_RETURN_CMD_VERSION:
             OutputHexValue(ENUM_CMD_VERSION_CURRENT_PLUS_1-1);
             uart_output_enqueue('\n');
             break;
         case ENUM_CMD_GET_TX_RUNNING_STATUS:
+            OutputString("TX:");   
             OutputHexValue(Get_IR_Tx_running_status());
+            uart_output_enqueue('\n');
             break;
         case ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT:
+            OutputString("CNT:0x");    
             OutputHexValue(Get_IR_Repeat_Cnt());
+            uart_output_enqueue('\n');
             break;
                 
         default:

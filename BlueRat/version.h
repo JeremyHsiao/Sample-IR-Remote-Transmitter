@@ -12,6 +12,6 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-#define _SW_VERSION      "1.00"
+#define _SW_VERSION      "1.01"
 
 #endif // !_UART_APP_H_
