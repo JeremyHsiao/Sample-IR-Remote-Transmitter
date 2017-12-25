@@ -202,12 +202,13 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_RETURN_SW_VER:
-            OutputString_with_newline(_SW_VERSION);
+            OutputString_with_newline("SW:" _SW_VERSION);
             break;
         case ENUM_CMD_RETURN_BUILD_TIME:
             OutputString_with_newline(__DATE__ "  " __TIME__);
             break;
         case ENUM_CMD_RETURN_CMD_VERSION:
+            OutputString("CMD_VER:");    
             OutputHexValue(ENUM_CMD_VERSION_CURRENT_PLUS_1-1);
             uart_output_enqueue('\n');
             break;
