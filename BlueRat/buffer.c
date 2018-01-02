@@ -63,14 +63,14 @@
 //
 
 // UART-RX Buffer
-#define UART_RX_BUF_SIZE      16
+#define UART_RX_BUF_SIZE      24
 uint8_t u8Buffer_RX[UART_RX_BUF_SIZE];
 uint8_t *UART_BUF_RX_WRITE_PTR = u8Buffer_RX;
 uint8_t *UART_BUF_RX_REAR_PTR = u8Buffer_RX;
 uint8_t UART_BUF_RX_FULL = 0;
 
 // UART-TX Buffer
-#define UART_TX_BUF_SIZE      16
+#define UART_TX_BUF_SIZE      32
 uint8_t u8Buffer_TX[UART_TX_BUF_SIZE];
 uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
