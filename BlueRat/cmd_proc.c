@@ -230,23 +230,23 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_RETURN_SW_VER:
-            OutputString_with_newline("SW:" _SW_VERSION);
+            OutputString_with_newline(_CMD_RETURN_SW_VER_RETURN_HEADER_ _SW_VERSION);
             break;
         case ENUM_CMD_RETURN_BUILD_TIME:
-            OutputString_with_newline(__DATE__ "  " __TIME__);
+            OutputString_with_newline(_CMD_BUILD_TIME_RETURN_HEADER_ __DATE__ " " __TIME__);
             break;
         case ENUM_CMD_RETURN_CMD_VERSION:
-            OutputString("CMD_VER:");    
+            OutputString(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_);    
             OutputHexValue(ENUM_CMD_VERSION_CURRENT_PLUS_1-1);
             uart_output_enqueue('\n');
             break;
         case ENUM_CMD_GET_TX_RUNNING_STATUS:
-            OutputString("TX:");   
+            OutputString(_CMD_GET_TX_RUNNING_STATUS_HEADER_);   
             OutputHexValue(Get_IR_Tx_running_status());
             uart_output_enqueue('\n');
             break;
         case ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT:
-            OutputString("CNT:0x");    
+            OutputString(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ "0x");    
             OutputHexValue(Get_IR_Repeat_Cnt());
             uart_output_enqueue('\n');
             break;

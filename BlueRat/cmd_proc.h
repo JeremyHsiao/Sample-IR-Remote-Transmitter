@@ -156,6 +156,12 @@ typedef enum {
 #define CMD_SEND_COMMAND_CODE_WITH_BYTE             (0xc0)
 #define CMD_SEND_COMMAND_CODE_ONLY                  (0xe0)
 
+#define _CMD_RETURN_SW_VER_RETURN_HEADER_                 "SW:"  
+#define _CMD_BUILD_TIME_RETURN_HEADER_                    ""
+#define _CMD_RETURN_CMD_VERSION_RETURN_HEADER_            "CMD_VER:" 
+#define _CMD_GET_TX_RUNNING_STATUS_HEADER_                "TX:"  
+#define _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_   "CNT:"  
+
 extern void CheckIfISP(void);
 extern void ProcessInputCommand(void);
 
