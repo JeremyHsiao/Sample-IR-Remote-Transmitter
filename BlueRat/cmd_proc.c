@@ -21,7 +21,8 @@
 #include "cmd_proc.h"
 #include "version.h"
 
-#define ISP_PASSWORD  (0x46574154)     // input password is FWAT for entering ISP  
+#define ISP_PASSWORD  (0x46574154)         // input password is FWAT for entering ISP  
+#define RESTART_PASSWORD  (0x46535050)     // input password is FSPP for restart  
 
 uint8_t compare_result;
 
@@ -67,6 +68,22 @@ void CheckIfISP(void)
     {
         EnterISP(); // system will enter LDROM afterward
     }
+}
+
+void ForceRestart(void)
+{
+        Set_IR_Repeat_Cnt(0);
+        Init_Parser();
+        Init_Timer_App();
+        Init_IR_buffer();
+/*    
+        WDT_Close();
+        SYS_UnlockReg();
+       	FMC_Open();
+        FMC_SetBootSource(1);     
+        SYS_ResetCPU();    
+        SYS_LockReg();
+*/    
 }
 
 void ProcessInputCommand(void)
@@ -184,9 +201,20 @@ void ProcessInputCommand(void)
                 }
                 else
                 {
-                    //uart_output_enqueue_with_newline('U');
-                    //OutputHexValue(Next_Command_Get());
-                    //uart_output_enqueue('\n');
+                }
+            }
+            break;
+
+        case ENUM_CMD_FORCE_RESTART:
+            {
+                uint32_t output_data = Next_Input_Parameter_Get();
+                
+                if(output_data==RESTART_PASSWORD)     
+                {
+                    ForceRestart();
+                }
+                else
+                {
                 }
             }
             break;
