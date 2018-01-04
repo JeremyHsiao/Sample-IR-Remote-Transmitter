@@ -101,11 +101,12 @@ void ProcessInputCommand(void)
             break;
 
         case ENUM_CMD_SAY_HI:
-            OutputString_with_newline("HI");
+            OutputString_with_newline(_CMD_SAY_HI_RETURN_HEADER_);
             break;
          
         // Readback sensor value
-        case ENUM_CMD_GET_SENSOR_VALUE:    
+        case ENUM_CMD_GET_SENSOR_VALUE:  
+            OutputString(_CMD_SENSOR_INPUT_RETURN_HEADER_);            
             if(compare_result)
             {
                  uart_output_enqueue_with_newline('1');
@@ -137,7 +138,7 @@ void ProcessInputCommand(void)
                     }
                     temp_pa &= 0xcc00; // keep PA15/PA14/PA11/PA10
                     input_data |= ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
-                    OutputString("IN:0x");
+                    OutputString(_CMD_GPIO_INPUT_RETURN_HEADER_ "0x");
                     OutputHexValue(input_data);
                     uart_output_enqueue('\n');
             }
