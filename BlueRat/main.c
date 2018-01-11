@@ -227,12 +227,12 @@ int main(void)
         if(Get_IR_Tx_Finish_status())
         {
             Clear_IR_Tx_Finish();
-            uart_output_enqueue_with_newline('+');             // Tx finish one-time
+            //uart_output_enqueue_with_newline('+');             // Tx finish one-time
         }
         if(Get_IR_Tx_Finish_All_status())
         {
             Clear_IR_Tx_All_Finish();
-            uart_output_enqueue_with_newline('S');               // Tx finish and currently no more to send
+            //uart_output_enqueue_with_newline('S');               // Tx finish and currently no more to send
         }
 #ifdef ENABLE_WATCH_DOG_TIMER
         WDT_ResetCounter();
