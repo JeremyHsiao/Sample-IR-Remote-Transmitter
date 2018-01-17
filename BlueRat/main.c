@@ -258,7 +258,7 @@ int main(void)
                 }
                 else
                 {
-                    uart_output_enqueue_with_newline('?');       // Checksum error
+                    //uart_output_enqueue_with_newline('?');       // Checksum error
                 }
                 Reset_CheckSum();
                 Next_Command_Clear();
