@@ -169,11 +169,17 @@ uint8_t uart_output_queue_full_status(void)
 
 uint8_t uart_output_enqueue(uint8_t input_data)
 {
-  if(!UART_BUF_TX_FULL)  // must check a buffer-full status before an "add"
+  // if output_queue is empty now, we can put data to Tx directly  
+  if((!(UART0->FIFOSTS & UART_FIFOSTS_TXFULL_Msk))&&(uart_output_queue_empty_status()))
   {
+    UART0->DAT = input_data;
+    return 1;
+  } 
+  else if(!UART_BUF_TX_FULL)  // must check a buffer-full status before an "add"
+  {
+    UART0->INTEN &= ~UART_INTEN_THREIEN_Msk;   // access queue so UART-TX interrupt (where it will dequeue) is disabled temporarily.  
     *UART_BUF_TX_WRITE_PTR = input_data;
     BUF_PTR_INCREASE(UART_BUF_TX_WRITE_PTR,u8Buffer_TX,UART_TX_BUF_SIZE);
-    UART0->INTEN &= ~UART_INTEN_THREIEN_Msk;   // update buffer-full status in the block where UART-TX interrupt is diaabled temporarily.  
     BUF_FULL_CHECK(UART_BUF_TX_WRITE_PTR,UART_BUF_TX_REAR_PTR,UART_TX_BUF_SIZE, UART_BUF_TX_FULL); // always update buffer-full status at the end of an "add"
     UART0->INTEN |= UART_INTEN_THREIEN_Msk;   // Enable Tx interrupt to consume output buffer  
     return 1;

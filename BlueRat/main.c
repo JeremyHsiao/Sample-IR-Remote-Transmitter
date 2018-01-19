@@ -209,11 +209,11 @@ int main(void)
 
     //CheckIfISP();
 
-    printf(  "\n-----------------------------\n");
-    printf(    " Warm greeting by BlueRat\n");
-    printf(    " FW Version: v"  _SW_VERSION "\n" );
-    printf(    " "__DATE__"  "__TIME__"\n" );
-    printf(    "-----------------------------\n");
+    OutputString_with_newline(  "\n\r-----------------------------\n\r");
+    OutputString_with_newline(    " Warm greeting by BlueRat\n\r");
+    OutputString_with_newline(    " FW Version: v"  _SW_VERSION "\n\r" );
+    OutputString_with_newline(    " "__DATE__"  "__TIME__"\n\r" );
+    OutputString_with_newline(    "-----------------------------\n\r");
 	
     Initialize_buffer();
     Init_Parser();    
