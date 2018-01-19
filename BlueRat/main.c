@@ -21,6 +21,8 @@
 #include "cmd_proc.h"
 #include "version.h"
 
+#define _48MHZ_	 			(__HSI)
+
 extern void WDT_MySetup(void);
 extern void WDT_MyClearTimeOutIntFlag(void);
 
@@ -44,19 +46,53 @@ void ACMP_IRQHandler(void)
     ACMP_CLR_INT_FLAG(ACMP,1);
 }
 
+//uint32_t SysClk_InitiateRC(uint32_t u32SystemClk)
+//{
+//	uint32_t u32SysClkDiv;
+//	
+//	/* Enable External XTL32K, OSC49M, OSC10K */
+//	CLK_EnableXtalRC(CLK_PWRCTL_LXTEN_Msk|CLK_PWRCTL_HIRCEN_Msk|CLK_PWRCTL_LIRCEN_Msk);
+
+//	/* Switch HCLK clock source to HXT */
+//	if( u32SystemClk == (32*1000000UL) )
+//	{
+//		CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKSEL0_HIRCFSEL_32M, CLK_CLKDIV0_HCLK(1));
+//		
+//		return 32768000UL;
+//	}
+//	
+//	/* Procedures to configure the HCLK from internal RC(set clock source and divide) */
+//	if ( (u32SysClkDiv = _48MHZ_/u32SystemClk) == 0 )	// Means the desired system clock is over 48MHz RC spec.
+//		u32SysClkDiv = 1;
+//	else if (u32SysClkDiv > 0x10)						// Means the desired system clock is small than min HCLK clock
+//		u32SysClkDiv = 0x10;
+//	
+//	CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKSEL0_HIRCFSEL_48M, CLK_CLKDIV0_HCLK(u32SysClkDiv));
+
+//	u32SystemClk = _48MHZ_/u32SysClkDiv;
+//	
+//	return u32SystemClk;
+//}
+
 void SYS_Init(void)
 {
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
+
     /* Unlock protected registers */
     SYS_UnlockReg();
 
+	//SysClk_InitiateRC(1000000UL*48);
     /* Enable External OSC49M */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
 
     /* Switch HCLK clock source to HXT */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKSEL0_HIRCFSEL_48M, CLK_CLKDIV0_HCLK(1));
+
+    /* Update System Core Clock */
+    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
+    SystemCoreClockUpdate();
 
     /* Enable IP clock */
     CLK_EnableModuleClock(UART_MODULE);
@@ -65,6 +101,7 @@ void SYS_Init(void)
     CLK_EnableModuleClock(WDT_MODULE);
     CLK_EnableModuleClock(ACMP_MODULE);	
     CLK_EnableModuleClock(ISP_MODULE);
+    CLK_EnableModuleClock(ANA_MODULE);
     
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
@@ -73,9 +110,10 @@ void SYS_Init(void)
     // Select WDT clock
     CLK_SetModuleClock(WDT_MODULE,CLK_CLKSEL1_WDTSEL_LIRC,0);  // Use 10K clock
     
-    /* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
-    SystemCoreClockUpdate();
+    // enable LDO for supplying power to GPIO port A
+	ANA->LDOPD &= ~ANA_LDOPD_PD_Msk;
+    ANA->LDOPD &= ~ANA_LDOPD_DISCHAR_Msk;
+	ANA->LDOSEL = (ANA->LDOSEL&~ANA_LDOSEL_LDOSEL_Msk)|CLK_LDOSEL_3_3V; 
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
@@ -152,6 +190,7 @@ void SYS_Init(void)
     SYS_ResetModule(I2C0_RST);
     SYS_ResetModule(TMR0_RST);
     SYS_ResetModule(ACMP_RST);
+    SYS_ResetModule(ANA_RST);
 
     /* Lock protected registers */
     SYS_LockReg();
@@ -162,6 +201,8 @@ int main(void)
 {
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
+	CLK_EnableLDO(CLK_LDOSEL_3_3V);	// Enable interl 3.3 LDO.
+	
     UART_init();
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
