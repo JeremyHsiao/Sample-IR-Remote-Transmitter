@@ -87,7 +87,7 @@ void Setup_IR_PWM_Pulse(void)
 {
 	if(bLevel)
 	{
-        if(PWM_period!=0xffffffff)
+        if(PWM_period!=0)
         {
             PWM_SetOutputPulse_v2(PWM0, PWM_period, Get_PWM_duty_cycle());
         }
@@ -99,7 +99,7 @@ void Setup_IR_PWM_Pulse(void)
 	}
 	else
 	{
-        if(PWM_period!=0xffffffff)
+        if(PWM_period!=0)
         {
             PWM_SetOutputPulse_v2(PWM0, PWM_period, 0);
         }
