@@ -51,5 +51,6 @@ typedef struct
 extern void PWM_Pulse_restart_read_pointer(void);
 extern uint8_t PWM_Pulse_end_of_data(void);
 extern uint8_t PWM_Pulse_read(T_PWM_BUFFER *return_value_ptr);
+extern void Copy_Input_Data_to_PWM_Data_and_Start(void);
 
 #endif /* !_BUFFER_H_ */

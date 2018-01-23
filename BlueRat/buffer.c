@@ -308,6 +308,65 @@ uint8_t IR_output_read(uint32_t *return_value_ptr)
 //
 // PWM-pulse Array function
 //
+//uint32_t    Get_PWM_period(void) { return PWM_period; }
+//void        Set_PWM_period(uint32_t period) { PWM_period = period; }
+//uint32_t    Get_PWM_duty_cycle(void) { return PWM_duty_cycle; }
+
+void Copy_Input_Data_to_PWM_Data_and_Start(void)
+{
+    uint32_t *src = u32Buffer_IR_DATA_Width, *end = IR_BUF_DATA_WRITE_PTR;
+    uint32_t pwm_period = Get_PWM_period();
+    uint32_t pwm_high = ( pwm_period * Get_PWM_duty_cycle() * 2 + 1  ) / 200;
+    uint32_t pwm_low = pwm_period - pwm_high;
+    PWM_BUF_WRITE_PTR = T_PWM_BUFFER_Buf; // Destination from beginning
+    while(src<end)
+    {
+        // Calculate PWM high pulse
+        uint32_t high_width = *src++;
+        uint32_t complete_cycle = high_width / pwm_period;
+        uint32_t remaining_width = high_width - (pwm_period*complete_cycle);
+        
+       
+        // Case 1: remaining is a (high + some low) pulse -> a complete high_cnt & low_cnt combines with next low-pulse
+        if(remaining_width>=pwm_high)
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt = (*src++) + (remaining_width - pwm_high);
+        }
+        // Case 2: remaining is partial high --> output it and low_cnt use next low-pulse
+        else if (remaining_width>=(pwm_high*5/8))
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt=remaining_width;
+            PWM_BUF_WRITE_PTR->low_cnt = (*src++);
+        }
+        // Case 3: remaining is mostly not high --> treat it as low so borrow one high_pulse from previous and combine low_pulse from previous with next low-pulse
+        else
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle-1;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt = (*src++) + pwm_low;
+        }
+        PWM_BUF_WRITE_PTR++;
+        
+        // Temporarily disabled
+        //IR_Transmit_Buffer_StartSend();
+    };
+}
+
 void PWM_Pulse_restart_read_pointer(void)
 {
   PWM_BUF_READ_PTR = T_PWM_BUFFER_Buf;

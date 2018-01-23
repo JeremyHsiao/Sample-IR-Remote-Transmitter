@@ -228,6 +228,7 @@ void ProcessInputCommand(void)
             Set_PWM_period(Next_PWM_Period_Get());
             Set_PWM_duty_cycle(Next_DutyCycle_Period_Get());
             Copy_Input_Data_to_Tx_Data_and_Start();
+            Copy_Input_Data_to_PWM_Data_and_Start();
             break;
 
         case ENUM_CMD_RETURN_SW_VER:
