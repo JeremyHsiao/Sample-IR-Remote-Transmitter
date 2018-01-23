@@ -76,17 +76,27 @@ uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
+// Store inputing IR data from UART    
 // IR-Data Array
 #define IR_DATA_BUF_SIZE      256
 uint32_t u32Buffer_IR_DATA_Width[IR_DATA_BUF_SIZE];
 uint32_t *IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;
 
+// Use as data for Tx output
 // IR-pulse-TX Array
 #define IR_TX_BUF_SIZE      IR_DATA_BUF_SIZE
 uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
 uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
 uint8_t IR_BUF_TX_FULL = 0;
+
+// New Tx mechanism -- try to use solely PWM
+// IR-PWM-Pulse-Array
+#define IR_PWM_BUF_SIZE      (IR_DATA_BUF_SIZE)
+T_PWM_BUFFER T_PWM_BUFFER_Buf[IR_PWM_BUF_SIZE];
+T_PWM_BUFFER *PWM_BUF_WRITE_PTR =T_PWM_BUFFER_Buf;
+T_PWM_BUFFER *PWM_BUF_READ_PTR =T_PWM_BUFFER_Buf;
+uint8_t PWM_BUF_FULL = 0;
 
 //
 // Common function
@@ -287,6 +297,33 @@ uint8_t IR_output_read(uint32_t *return_value_ptr)
   {
     *return_value_ptr = *IR_BUF_TX_REAR_PTR;
     IR_BUF_TX_REAR_PTR++;
+    return TRUE;
+  }
+  else
+  {
+    return FALSE;
+  }
+}
+
+//
+// PWM-pulse Array function
+//
+void PWM_Pulse_restart_read_pointer(void)
+{
+  PWM_BUF_READ_PTR = T_PWM_BUFFER_Buf;
+}
+
+uint8_t PWM_Pulse_end_of_data(void)
+{
+    return (PWM_BUF_READ_PTR==PWM_BUF_WRITE_PTR)? TRUE: FALSE;
+}
+
+uint8_t PWM_Pulse_read(T_PWM_BUFFER *return_value_ptr)
+{
+  if(PWM_BUF_READ_PTR<PWM_BUF_WRITE_PTR)
+  {
+    *return_value_ptr = *PWM_BUF_READ_PTR;
+    PWM_BUF_READ_PTR++;
     return TRUE;
   }
   else
