@@ -177,16 +177,15 @@ void IR_Transmit_Buffer_StartSend(void)
 	if(!IR_output_end_of_data())
 	{
 		// Please set up first pulse here
-        Timer_Init();    
         IR_output_read(&temp_width);
+        Timer_Init();    
         Timer_SetNextTimeout(WIDTH_TIMER,temp_width);
-
         Restart_IR_Pulse();
-        Setup_IR_PWM_Pulse();
-        IR_Transmitter_Running = 1;
         TIMER_EnableInt(WIDTH_TIMER);
         TIMER_Start(WIDTH_TIMER);
+        Setup_IR_PWM_Pulse();
         PWM_Start_v2(PWM0);
+        IR_Transmitter_Running = 1;
 	}
 	else
 	{
