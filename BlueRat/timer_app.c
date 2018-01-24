@@ -133,9 +133,9 @@ void TMR0_IRQHandler(void)
     if(!IR_output_end_of_data())
     {
  		// set IR output pulse
-		Setup_IR_PWM_Pulse();
         IR_output_read(&temp_width);
         Timer_SetNextTimeout(WIDTH_TIMER,temp_width);
+		Setup_IR_PWM_Pulse();
     }
     else
     {
@@ -143,9 +143,9 @@ void TMR0_IRQHandler(void)
         {
             IR_Repeat_Cnt--;
             IR_output_restart_read_pointer();
-            Setup_IR_PWM_Pulse();
             IR_output_read(&temp_width);
             Timer_SetNextTimeout(WIDTH_TIMER,temp_width);
+            Setup_IR_PWM_Pulse();
             WDT_ResetCounter();
        }
         else
@@ -185,8 +185,8 @@ void IR_Transmit_Buffer_StartSend(void)
         Setup_IR_PWM_Pulse();
         IR_Transmitter_Running = 1;
         TIMER_EnableInt(WIDTH_TIMER);
-        PWM_Start_v2(PWM0);
         TIMER_Start(WIDTH_TIMER);
+        PWM_Start_v2(PWM0);
 	}
 	else
 	{
