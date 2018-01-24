@@ -258,13 +258,16 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
     uint32_t    temp_CMP;
 
     u32DutyCycle = 100 - u32DutyCycle;    
-    temp_CMP = ( ((u32DutyCycle*(width+1))*2) + 1) / (100*2);
+    temp_CMP = (width * u32DutyCycle)/100;      // here is CMP + 1 --> need to reduce one later
     
+    // PERIOD + 1 = width --> PERIOD = width - 1
+    width--;
     if(temp_CMP>0)
     {
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0))))) = temp_CMP - 1;
+        temp_CMP--;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT0))))) = temp_CMP;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD0))))) = width;
-        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1))))) = temp_CMP - 1;
+        *((__IO uint32_t *)((((uint32_t) & ((pwm)->CMPDAT1))))) = temp_CMP;
         *((__IO uint32_t *)((((uint32_t) & ((pwm)->PERIOD1))))) = width;
         (pwm)->CTL &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk);      // No Inverting
     }
