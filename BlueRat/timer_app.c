@@ -194,6 +194,37 @@ void IR_Transmit_Buffer_StartSend(void)
 	}
 }
 
+void PWM_Transmit_Buffer_StartSend(void)
+{
+    //uint32_t temp_width;
+    T_PWM_BUFFER temp_pwm;
+	if (IR_Transmitter_Running!=0)
+	{
+	  return;			// already running, no need to start timer match and interrupt
+	}
+
+    PWM_Pulse_restart_read_pointer();
+	// Get next pulse width and level
+	if(!PWM_Pulse_end_of_data())
+	{
+		// Please set up first pulse here
+        //Timer_Init();    
+        PWM_Pulse_read(&temp_pwm);
+        //Timer_SetNextTimeout(WIDTH_TIMER,temp_width);
+
+        //Restart_IR_Pulse();
+        //Setup_IR_PWM_Pulse();
+        IR_Transmitter_Running = 1;
+        //TIMER_EnableInt(WIDTH_TIMER);
+        PWM_Start_v3(PWM0);
+        //TIMER_Start(WIDTH_TIMER);
+	}
+	else
+	{
+        //uart_output_enqueue_with_newline('-');       // empty Tx buffer
+	}
+}
+
 ///******************************************************************************
 //**                            End Of File
 //******************************************************************************/

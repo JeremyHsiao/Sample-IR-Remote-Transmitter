@@ -278,6 +278,17 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
     }
 }
 
+void PWM_SetOutputPulse_v3(uint32_t high_width, uint32_t low_width)
+{
+    uint32_t    width = high_width + low_width - 1;
+    
+    PWM0->CMPDAT0 = low_width;
+    PWM0->PERIOD0 = width;
+    PWM0->CMPDAT1 = low_width;
+    PWM0->PERIOD1 = width;
+    PWM0->CTL &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk);      // No Inverting
+}
+
 /**
  * @brief Start PWM module
  * @param[in] pwm The base address of PWM module
@@ -308,6 +319,12 @@ void PWM_Start_v2(PWM_T *pwm)
 //    u32Mask = (PWM_CTL_CNTEN0_Msk &0x100);
 
     (pwm)->CTL |= u32Mask;
+}
+
+void PWM_Start_v3(PWM_T *pwm)
+{
+    (pwm)->CTL &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk|PWM_CTL_CNTMODE0_Msk|PWM_CTL_CNTMODE1_Msk|PWM_CTL_DTEN01_Msk);      // No Inverting & auto-reload mode & disable dead-zone
+    (pwm)->CTL |= (PWM_CTL_CNTEN0_Msk | PWM_CTL_CNTEN1_Msk);  // start-run for both PWM
 }
 
 /**
