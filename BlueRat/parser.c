@@ -230,7 +230,8 @@ void ProcessInputChar(uint8_t input_byte)
 
         case ENUM_PARSING_STATE_WAIT_CARRIER_WIDTH_LOW:
         	Internal_CheckSum ^= input_byte;
-        	temp_buf = ((temp_buf*256) + input_byte)/8;   // here we use 1us-count, original unit is 1/8us for each count so divided by 8
+        	//temp_buf = ((temp_buf*256) + input_byte)/8;   // here we use 1us-count, original unit is 1/8us for each count so divided by 8
+            temp_buf = ((temp_buf*256) + input_byte);   // here we use 1/8 us-count, original unit is 1/8us 
 //            if(temp_buf==0)
 //            {
 //            	Next_PWM_Period_Set(0xffffffff);

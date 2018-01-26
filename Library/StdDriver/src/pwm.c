@@ -216,7 +216,8 @@ void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32D
     const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
     #define  u32PWMClockSrc (48000000)  // Here we will set to 1us per count (48MHz/48)
     #define  u8Divider      (1)         // Can be only 1, 2, 4, 8, 16
-    #define  u8Prescale     (48)        // Can be 2~256
+    //#define  u8Prescale     (48)        // Can be 2~256
+    #define  u8Prescale     (48/8)        // Can be 2~256 --> use 1/8 us as unit
     uint16_t u16CNR;            
 //    uint32_t temp;
         
