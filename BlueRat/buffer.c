@@ -63,7 +63,7 @@
 //
 
 // UART-RX Buffer
-#define UART_RX_BUF_SIZE      24
+#define UART_RX_BUF_SIZE      32
 uint8_t u8Buffer_RX[UART_RX_BUF_SIZE];
 uint8_t *UART_BUF_RX_WRITE_PTR = u8Buffer_RX;
 uint8_t *UART_BUF_RX_REAR_PTR = u8Buffer_RX;

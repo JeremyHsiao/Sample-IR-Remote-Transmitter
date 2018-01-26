@@ -36,7 +36,7 @@ void EnterISP(void)
         //while(sleep_time-->0){WDT_ResetCounter();}     // Delay for message
         Init_Parser();
         Init_Timer_App();
-        Init_IR_buffer();
+        Initialize_buffer();
     
         //printf(  "\nEntering Software update mode.\n" );
         //printf(  "Please close Autobox Application and then connect to Software update tool.\n\n");
