@@ -209,15 +209,15 @@ int main(void)
 
     //CheckIfISP();
 
-    OutputString_with_newline(  "\n\r-----------------------------\n\r");
-    OutputString_with_newline(    " Warm greeting by BlueRat\n\r");
-    OutputString_with_newline(    " FW Version: v"  _SW_VERSION "\n\r" );
-    OutputString_with_newline(    " "__DATE__"  "__TIME__"\n\r" );
-    OutputString_with_newline(    "-----------------------------\n\r");
-	
     Initialize_buffer();
     Init_Parser();    
     Init_Timer_App();
+
+    OutputString_with_newline(  "\n\r-----------------------------\n\r");
+    OutputString_with_newline(    " Warm greeting by BlueRat\n\r");
+    OutputString_with_newline(    " FW Version: v"  _SW_VERSION "\n\r" );
+    OutputString_with_newline(    " "__DATE__" "__TIME__"\n\r" );
+    OutputString_with_newline(    "-----------------------------\n\r");
 
     /* set PWM0 channel 0 output configuration */
     PWM_ConfigOutputChannel_v2(PWM0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range

@@ -79,7 +79,7 @@ int OutputString(char *str)
     int return_value = 0;
     while(*str!='\0')
     {
-        uart_output_enqueue(*str);
+        while(uart_output_enqueue(*str)==0);
         str++;
         return_value++;
     }
