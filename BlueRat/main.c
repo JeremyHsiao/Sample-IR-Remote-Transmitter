@@ -26,13 +26,6 @@
 extern void WDT_MySetup(void);
 extern void WDT_MyClearTimeOutIntFlag(void);
 
-void PWM0_IRQHandler(void)
-{
-    // Clear channel 0 period interrupt flag
-    PWM_ClearIntFlag(PWM0, 0);
-    PWM_ClearIntFlag(PWM0, 1);
-}
-
 void WDT_IRQHandler(void)
 {
     Reset_IR_Tx_running_status();
@@ -184,6 +177,11 @@ void SYS_Init(void)
     PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
     //PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
     PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    // Set output as 0 for all PWM mode GPIO
+    PA->DATMSK = ~(GPIO_DOUT_DOUT12_Msk|GPIO_DOUT_DOUT13_Msk);
+    PA->DOUT = ~(GPIO_DOUT_DOUT12_Msk|GPIO_DOUT_DOUT13_Msk);
+    PB->DATMSK = ~(GPIO_DOUT_DOUT4_Msk|GPIO_DOUT_DOUT5_Msk);
+    PB->DOUT = ~(GPIO_DOUT_DOUT4_Msk|GPIO_DOUT_DOUT5_Msk);
 
     SYS_ResetModule(PWM0_RST);
     SYS_ResetModule(UART0_RST);
@@ -220,9 +218,11 @@ int main(void)
     OutputString_with_newline(    "-----------------------------\n\r");
 
     /* set PWM0 channel 0 output configuration */
-    PWM_ConfigOutputChannel_v2(PWM0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
-    PWM_EnableOutput(PWM0, 0x3); // Enable Output of both Channels at once
+    //PWM_ConfigOutputChannel_v2(PWM0, 38000, 33); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
+    //PWM_ConfigOutputChannel_v3(PWM0); // Do not change 3rd/4th parameter because this function has been tailored to specific input parameter range
+    //PWM_SetOutputPulse_v2(PWM0,20,0);
     // PWM interrup not used at this moment
+    //PWM_EnableOutput(PWM0, 0x3); // Enable Output of both Channels at once
     //PWM_EnableInt(PWM0, 0x0, 1);
     //PWM_EnableInt(PWM0, 0x1, 1);
     PWM_DisableInt(PWM0, 0x0);
@@ -235,9 +235,10 @@ int main(void)
     ACMP_Open(ACMP,1,ACMP_CMP1VNEG_VBG,0);
     ACMP_ENABLE_INT(ACMP,1);
 
-    //NVIC_EnableIRQ(PWM0_IRQn);   // PWM interrup not used at this moment
-    NVIC_DisableIRQ(PWM0_IRQn);
-    NVIC_EnableIRQ(TMR0_IRQn);	
+    NVIC_EnableIRQ(PWM0_IRQn);   // PWM interrup not used at this moment
+    //NVIC_DisableIRQ(PWM0_IRQn);
+    //NVIC_EnableIRQ(TMR0_IRQn);	
+    NVIC_DisableIRQ(TMR0_IRQn);
     NVIC_EnableIRQ(ACMP_IRQn);
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
