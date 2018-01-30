@@ -27,9 +27,9 @@ uint32_t	PWM_period;
 uint32_t	PWM_duty_cycle;
 uint8_t     bLevel;
 
-uint32_t    PWM_internal_PWM_pulse_repeat_counter = 0;
-uint32_t    PWM_internal_PWM_high_cnt = 0;
-uint32_t    PWM_internal_PWM_low_cnt = 0;
+uint32_t    PWM_internal_PWM_pulse_repeat_counter;
+uint32_t    PWM_internal_PWM_high_cnt;
+uint32_t    PWM_internal_PWM_low_cnt;
 
 uint32_t    Get_IR_Repeat_Cnt(void) { return IR_Repeat_Cnt; }
 void        Set_IR_Repeat_Cnt(uint32_t cnt) { IR_Repeat_Cnt = cnt; }
@@ -41,6 +41,13 @@ void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycl
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
 
 const uint32_t PWM_CLOCK_UNIT_DIVIDER = 8;         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER
+
+void PWM_Clear_Pulse_Tuple(void)
+{
+    PWM_internal_PWM_pulse_repeat_counter = 0; 
+    PWM_internal_PWM_high_cnt = 0;
+    PWM_internal_PWM_low_cnt = 0;
+}
 
 void PWM_Set_Pulse_Tuple(T_PWM_BUFFER pwm_tuple)
 {
@@ -114,6 +121,7 @@ void Init_Timer_App(void)
     PWM_period =  (uint32_t) (1000000/(38000));		// For 38KHz PWM pulse
     PWM_duty_cycle = 33;
     bLevel = 1;
+    PWM_Clear_Pulse_Tuple();
 }
 
 void Reset_IR_Tx_running_status(void)
@@ -290,8 +298,6 @@ void PWM_Transmit_Buffer_StartSend(void)
         PWM_Start_v3(PWM0);
         //TIMER_Start(WIDTH_TIMER);
         PWM_Load_Internal_Counter_and_Decrease_Internal_Count();        // Pre-load 2nd PWM count, others are pre-loaded in interrupt 
-
-        
 	}
 	else
 	{
