@@ -171,13 +171,17 @@ void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint
 void PWM_ConfigOutputChannel_v2(PWM_T *pwm,
                                  uint32_t u32Frequncy,
                                  uint32_t u32DutyCycle);
+void PWM_ConfigOutputChannel_v3(PWM_T *pwm);
 
 void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle);
+void PWM_SetOutputPulse_v3(uint32_t high_width, uint32_t low_width);
                                  
 void PWM_Start(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_Stop(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_Start_v2(PWM_T *pwm);
+void PWM_Start_v3(PWM_T *pwm);
 void PWM_Stop_v2(PWM_T *pwm);
+void PWM_Stop_v3(PWM_T *pwm);
 void PWM_ForceStop(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_EnableCapture(PWM_T *pwm, uint32_t u32ChannelMask);
 void PWM_DisableCapture(PWM_T *pwm, uint32_t u32ChannelMask);
@@ -193,7 +197,6 @@ void PWM_EnableInt(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t u32IntType);
 void PWM_DisableInt(PWM_T *pwm, uint32_t u32ChannelNum);
 void PWM_ClearIntFlag(PWM_T *pwm, uint32_t u32ChannelNum);
 uint32_t PWM_GetIntFlag(PWM_T *pwm, uint32_t u32ChannelNum);
-
 
 /*@}*/ /* end of group N575_PWM_EXPORTED_FUNCTIONS */
 

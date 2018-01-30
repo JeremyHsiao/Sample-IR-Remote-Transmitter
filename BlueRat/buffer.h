@@ -40,4 +40,17 @@ extern void IR_output_restart_read_pointer(void);
 extern uint8_t IR_output_end_of_data(void);
 extern uint8_t IR_output_read(uint32_t *return_value_ptr);
 
+// New Tx mechanism -- try to use solely PWM
+// IR-PWM-Pulse-Array
+typedef struct
+{
+    uint32_t repeat_no;
+    uint32_t high_cnt;
+    uint32_t low_cnt;
+} T_PWM_BUFFER;
+extern void PWM_Pulse_restart_read_pointer(void);
+extern uint8_t PWM_Pulse_end_of_data(void);
+extern uint8_t PWM_Pulse_read(T_PWM_BUFFER *return_value_ptr);
+extern void Copy_Input_Data_to_PWM_Data_and_Start(void);
+
 #endif /* !_BUFFER_H_ */

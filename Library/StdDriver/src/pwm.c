@@ -233,6 +233,27 @@ void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32D
     PWM_SetOutputPulse_v2(pwm,u16CNR,u32DutyCycle);
 }
 
+extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; //      (8)         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER: please don't change it
+
+void PWM_ConfigOutputChannel_v3(PWM_T *pwm)
+{
+    /* this table is mapping divider value to register configuration */
+    const uint32_t  u32PWMDividerToRegTbl[17] = {NULL, 4, 0, NULL, 1, NULL, NULL, NULL, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3};
+    const uint32_t  Divider = 1;
+    const uint32_t  Prescale = (48/PWM_CLOCK_UNIT_DIVIDER);        // Can be 2~256 --> use 1/8 us as unit
+    uint32_t ctl_value;
+        
+    // every two channels share the same prescaler
+    (pwm)->CLKPSC = (((pwm)->CLKPSC & ~(PWM_CLKPSC_CLKPSC01_Msk)) | (Prescale-1));   // pre-scaler must -1
+    // Setup clock divider
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV0_Msk)) | (u32PWMDividerToRegTbl[Divider]<<PWM_CLKDIV_CLKDIV0_Pos);    
+    (pwm)->CLKDIV = ((pwm)->CLKDIV & ~(PWM_CLKDIV_CLKDIV1_Msk)) | (u32PWMDividerToRegTbl[Divider]<<PWM_CLKDIV_CLKDIV1_Pos);// LUT for divider
+    ctl_value = (pwm)->CTL;
+    ctl_value &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk|PWM_CTL_DTEN01_Msk);      // No Inverting & disable dead-zone  
+    ctl_value |= PWM_CTL_CNTMODE0_Msk|PWM_CTL_CNTMODE1_Msk; // use auto-reload       
+    (pwm)->CTL = ctl_value;
+}
+
 //void PWM_SetOutputPulse(PWM_T *pwm, uint32_t u32ChannelNum, uint32_t width, uint32_t u32DutyCycle)
 //{
 //    uint32_t    temp_CMP;
@@ -282,6 +303,17 @@ void PWM_SetOutputPulse_v2(PWM_T *pwm, uint32_t width, uint32_t u32DutyCycle)
     }
 }
 
+void PWM_SetOutputPulse_v3(uint32_t high_width, uint32_t low_width)
+{
+    const uint32_t    period_dat = high_width + low_width - 1;
+    const uint32_t    cmp_dat = low_width - 1;
+    
+    PWM0->CMPDAT0 = cmp_dat;
+    PWM0->PERIOD0 = period_dat;
+    PWM0->CMPDAT1 = cmp_dat;
+    PWM0->PERIOD1 = period_dat;
+}
+
 /**
  * @brief Start PWM module
  * @param[in] pwm The base address of PWM module
@@ -312,6 +344,12 @@ void PWM_Start_v2(PWM_T *pwm)
 //    u32Mask = (PWM_CTL_CNTEN0_Msk &0x100);
 
     (pwm)->CTL |= u32Mask;
+}
+
+void PWM_Start_v3(PWM_T *pwm)
+{
+    //(pwm)->CTL &= ~(PWM_CTL_PINV0_Msk|PWM_CTL_PINV1_Msk|PWM_CTL_CNTMODE0_Msk|PWM_CTL_CNTMODE1_Msk|PWM_CTL_DTEN01_Msk);      // No Inverting & disable dead-zone
+    (pwm)->CTL |= (PWM_CTL_CNTEN0_Msk | PWM_CTL_CNTEN1_Msk); //start-run for both PWM
 }
 
 /**

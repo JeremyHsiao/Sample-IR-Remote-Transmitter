@@ -76,17 +76,27 @@ uint8_t *UART_BUF_TX_WRITE_PTR = u8Buffer_TX;
 uint8_t *UART_BUF_TX_REAR_PTR = u8Buffer_TX;
 uint8_t UART_BUF_TX_FULL = 0;
 
+// Store inputing IR data from UART    
 // IR-Data Array
 #define IR_DATA_BUF_SIZE      256
 uint32_t u32Buffer_IR_DATA_Width[IR_DATA_BUF_SIZE];
 uint32_t *IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;
 
+// Use as data for Tx output
 // IR-pulse-TX Array
 #define IR_TX_BUF_SIZE      IR_DATA_BUF_SIZE
 uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
 uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
 uint8_t IR_BUF_TX_FULL = 0;
+
+// New Tx mechanism -- try to use solely PWM
+// IR-PWM-Pulse-Array
+#define IR_PWM_BUF_SIZE      (IR_DATA_BUF_SIZE)
+T_PWM_BUFFER T_PWM_BUFFER_Buf[IR_PWM_BUF_SIZE];
+T_PWM_BUFFER *PWM_BUF_WRITE_PTR =T_PWM_BUFFER_Buf;
+T_PWM_BUFFER *PWM_BUF_READ_PTR =T_PWM_BUFFER_Buf;
+uint8_t PWM_BUF_FULL = 0;
 
 //
 // Common function
@@ -287,6 +297,130 @@ uint8_t IR_output_read(uint32_t *return_value_ptr)
   {
     *return_value_ptr = *IR_BUF_TX_REAR_PTR;
     IR_BUF_TX_REAR_PTR++;
+    return TRUE;
+  }
+  else
+  {
+    return FALSE;
+  }
+}
+
+//
+// PWM-pulse Array function
+//
+//uint32_t    Get_PWM_period(void) { return PWM_period; }
+//void        Set_PWM_period(uint32_t period) { PWM_period = period; }
+//uint32_t    Get_PWM_duty_cycle(void) { return PWM_duty_cycle; }
+
+void Copy_Input_Data_to_PWM_Data_and_Start(void)
+{
+    uint32_t *src = u32Buffer_IR_DATA_Width, *end = IR_BUF_DATA_WRITE_PTR;
+    const uint32_t pwm_period = Get_PWM_period() * PWM_CLOCK_UNIT_DIVIDER / 8; // please note that we change unit of PWM-clock from 1/8 us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
+    const uint32_t pwm_high = ( pwm_period * Get_PWM_duty_cycle() * 2 + 1  ) / 200;
+    const uint32_t pwm_low = pwm_period - pwm_high;
+    PWM_BUF_WRITE_PTR = T_PWM_BUFFER_Buf; // Destination from beginning
+    while(src<end)
+    {
+        // Calculate PWM high pulse
+        const uint32_t high_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER;       // please note that we change unit of PWM-clock from 1us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
+        const uint32_t low_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER;        // please note that we change unit of PWM-clock from 1us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
+        const uint32_t complete_cycle = high_width / pwm_period;
+        const uint32_t remaining_width = high_width - (pwm_period*complete_cycle);
+        const uint32_t buffer_limit = 0x10000;
+        uint32_t       temp_total_width; 
+       
+        // Case 1: remaining is a (high + some low) pulse -> last remaining pulse is a complete high & low_cnt combines with next low-pulse
+        if(remaining_width>=pwm_high)
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt = low_width + (remaining_width - pwm_high);
+        }
+        // Case 2: remaining is partial high --> last remaining pulse is a partial high and low_cnt is the whole low-IR-pulse coming next.
+        else if (remaining_width>0)
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = remaining_width;
+            PWM_BUF_WRITE_PTR->low_cnt = low_width;
+        }
+        // Case 3: No Remaining --> last *complete* pulse is a a complete high & low_cnt is a complete low + low-IR-pulse coming next.
+        else
+        {
+            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle-1;
+            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
+            PWM_BUF_WRITE_PTR++;
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
+            PWM_BUF_WRITE_PTR->low_cnt = low_width + pwm_low;
+        }
+        // Check if current (high_cnt+low_cnt) is > 0x10000, 
+        temp_total_width = PWM_BUF_WRITE_PTR->high_cnt + PWM_BUF_WRITE_PTR->low_cnt;
+        if(temp_total_width>=buffer_limit)        
+        {
+            // if yes, update last packet 
+            const uint32_t long_wait_cnt = buffer_limit - (PWM_CLOCK_UNIT_DIVIDER*0x200); // make sure last low-pulse packet has min. 512(us) length
+            PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
+            PWM_BUF_WRITE_PTR++;
+            
+            // and separate very long low-pulse into several data packet where high_cnt==0
+            temp_total_width -= long_wait_cnt;    
+            // if still to larger, divide until it is not too large
+            if(temp_total_width>=buffer_limit)        
+            {
+                // prepare long-delay packet
+                PWM_BUF_WRITE_PTR->repeat_no = 1;
+                PWM_BUF_WRITE_PTR->high_cnt = 0;
+                PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
+                temp_total_width -= long_wait_cnt;   
+                while(temp_total_width>=buffer_limit)
+                {                    
+                    PWM_BUF_WRITE_PTR->repeat_no++;
+                    temp_total_width -= long_wait_cnt;   
+                }
+                PWM_BUF_WRITE_PTR++;
+            }
+
+            // Pack the remaining low-pulse
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = 0;
+            PWM_BUF_WRITE_PTR->low_cnt = temp_total_width;
+            PWM_BUF_WRITE_PTR++;
+        }
+        else
+        {
+            // no need to update last packet, just move on
+            PWM_BUF_WRITE_PTR++;
+        }
+        
+        PWM_Transmit_Buffer_StartSend();
+    };
+}
+
+void PWM_Pulse_restart_read_pointer(void)
+{
+  PWM_BUF_READ_PTR = T_PWM_BUFFER_Buf;
+}
+
+uint8_t PWM_Pulse_end_of_data(void)
+{
+    return (PWM_BUF_READ_PTR==PWM_BUF_WRITE_PTR)? TRUE: FALSE;
+}
+
+uint8_t PWM_Pulse_read(T_PWM_BUFFER *return_value_ptr)
+{
+  if(PWM_BUF_READ_PTR<PWM_BUF_WRITE_PTR)
+  {
+    *return_value_ptr = *PWM_BUF_READ_PTR;
+    PWM_BUF_READ_PTR++;
     return TRUE;
   }
   else

@@ -12,6 +12,7 @@
 
 extern void         Init_Timer_App(void);
 extern void 		IR_Transmit_Buffer_StartSend(void);
+extern void         PWM_Transmit_Buffer_StartSend(void);
 extern uint8_t      Get_IR_Tx_running_status(void);
 extern void         Reset_IR_Tx_running_status(void);
 
@@ -30,6 +31,8 @@ extern void         Set_PWM_duty_cycle(uint32_t duty_cycle);
 
 extern void         Setup_IR_PWM_Pulse(void);
 extern void         Timer_Init(void);
+
+extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; 
 
 #endif /* end _TIMER_APP_H_ */
 /*****************************************************************************
