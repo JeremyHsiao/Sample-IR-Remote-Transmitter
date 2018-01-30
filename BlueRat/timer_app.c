@@ -49,9 +49,10 @@ void PWM_Set_Pulse_Tuple(T_PWM_BUFFER pwm_tuple)
     PWM_internal_PWM_low_cnt = pwm_tuple.low_cnt;
 }
 
-void PWM_Load_Internal_Counter(void)
+void PWM_Load_Internal_Counter_and_Decrease_Internal_Count(void)
 {
     PWM_SetOutputPulse_v3(PWM_internal_PWM_high_cnt,PWM_internal_PWM_low_cnt);
+    --PWM_internal_PWM_pulse_repeat_counter;
 }
 
 void PWM0_IRQHandler(void)
@@ -65,9 +66,9 @@ void PWM0_IRQHandler(void)
     }
     else
     {
-        // Refresh PWM counter value
-        PWM_Load_Internal_Counter();
-        --PWM_internal_PWM_pulse_repeat_counter;
+        // Refresh PWM counter value and --internal count
+        PWM_Load_Internal_Counter_and_Decrease_Internal_Count();
+        
         if(PWM_internal_PWM_pulse_repeat_counter==0)         
         {
             // If this time is the last repeat time of current PWM tuple,  load next tuple
@@ -98,7 +99,7 @@ void PWM0_IRQHandler(void)
                 IR_Finish_Tx_one_RC = 1;
             }
         }
-        // If not the last repeat time of current PWM tuple, PWM_Load_Internal_Counter() is sufficient 
+        // If not the last repeat time of current PWM tuple, PWM_Load_Internal_Counter_and_Decrease_Internal_Count() is sufficient 
     }
     PWM_ClearIntFlag(PWM0, 0);
     WDT_ResetCounter();
@@ -280,7 +281,7 @@ void PWM_Transmit_Buffer_StartSend(void)
         
         //PWM_Pulse_read(&temp_pwm);
         PWM_Set_Pulse_Tuple(temp_pwm);
-        PWM_Load_Internal_Counter();        // Load 1st PWM count, others are in interrupt 
+        PWM_Load_Internal_Counter_and_Decrease_Internal_Count();        // Load 1st PWM count
 
         PWM_EnableInt(PWM0, 0x0, 0);
         PWM_EnableOutput(PWM0, 0x3);
@@ -288,6 +289,8 @@ void PWM_Transmit_Buffer_StartSend(void)
         
         PWM_Start_v3(PWM0);
         //TIMER_Start(WIDTH_TIMER);
+        PWM_Load_Internal_Counter_and_Decrease_Internal_Count();        // Pre-load 2nd PWM count, others are pre-loaded in interrupt 
+
         
 	}
 	else
