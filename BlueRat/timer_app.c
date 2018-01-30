@@ -40,7 +40,7 @@ void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycl
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
 
-const uint32_t PWM_CLOCK_UNIT_DIVIDER = 4;         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER
+const uint32_t PWM_CLOCK_UNIT_DIVIDER = 8;         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER
 
 void PWM_Set_Pulse_Tuple(T_PWM_BUFFER pwm_tuple)
 {
@@ -228,9 +228,8 @@ void TMR0_IRQHandler(void)
         }
         IR_Finish_Tx_one_RC = 1;
     }
-    TIMER_ClearIntFlag(WIDTH_TIMER);	
+    TIMER_ClearIntFlag(TIMER0);	
 }
-
 
 void IR_Transmit_Buffer_StartSend(void)
 {

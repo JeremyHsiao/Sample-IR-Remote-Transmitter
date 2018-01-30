@@ -326,6 +326,8 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
         const uint32_t low_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER;        // please note that we change unit of PWM-clock from 1us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
         const uint32_t complete_cycle = high_width / pwm_period;
         const uint32_t remaining_width = high_width - (pwm_period*complete_cycle);
+        const uint32_t buffer_limit = 0x10000;
+        uint32_t       temp_total_width; 
        
         // Case 1: remaining is a (high + some low) pulse -> last remaining pulse is a complete high & low_cnt combines with next low-pulse
         if(remaining_width>=pwm_high)
@@ -360,7 +362,44 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
             PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
             PWM_BUF_WRITE_PTR->low_cnt = low_width + pwm_low;
         }
-        PWM_BUF_WRITE_PTR++;
+        // Check if current (high_cnt+low_cnt) is > 0x10000, 
+        temp_total_width = PWM_BUF_WRITE_PTR->high_cnt + PWM_BUF_WRITE_PTR->low_cnt;
+        if(temp_total_width>=buffer_limit)        
+        {
+            // if yes, update last packet 
+            const uint32_t long_wait_cnt = buffer_limit - (PWM_CLOCK_UNIT_DIVIDER*0x200); // make sure last low-pulse packet has min. 512(us) length
+            PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
+            PWM_BUF_WRITE_PTR++;
+            
+            // and separate very long low-pulse into several data packet where high_cnt==0
+            temp_total_width -= long_wait_cnt;    
+            // if still to larger, divide until it is not too large
+            if(temp_total_width>=buffer_limit)        
+            {
+                // prepare long-delay packet
+                PWM_BUF_WRITE_PTR->repeat_no = 1;
+                PWM_BUF_WRITE_PTR->high_cnt = 0;
+                PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
+                temp_total_width -= long_wait_cnt;   
+                while(temp_total_width>=buffer_limit)
+                {                    
+                    PWM_BUF_WRITE_PTR->repeat_no++;
+                    temp_total_width -= long_wait_cnt;   
+                }
+                PWM_BUF_WRITE_PTR++;
+            }
+
+            // Pack the remaining low-pulse
+            PWM_BUF_WRITE_PTR->repeat_no = 1;
+            PWM_BUF_WRITE_PTR->high_cnt = 0;
+            PWM_BUF_WRITE_PTR->low_cnt = temp_total_width;
+            PWM_BUF_WRITE_PTR++;
+        }
+        else
+        {
+            // no need to update last packet, just move on
+            PWM_BUF_WRITE_PTR++;
+        }
         
         PWM_Transmit_Buffer_StartSend();
     };
