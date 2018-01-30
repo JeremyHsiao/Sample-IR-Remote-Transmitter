@@ -32,6 +32,8 @@ extern void         Set_PWM_duty_cycle(uint32_t duty_cycle);
 extern void         Setup_IR_PWM_Pulse(void);
 extern void         Timer_Init(void);
 
+extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; 
+
 #endif /* end _TIMER_APP_H_ */
 /*****************************************************************************
 **                            End Of File

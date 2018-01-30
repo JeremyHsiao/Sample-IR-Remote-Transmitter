@@ -233,6 +233,8 @@ void PWM_ConfigOutputChannel_v2(PWM_T *pwm, uint32_t u32Frequency, uint32_t u32D
     PWM_SetOutputPulse_v2(pwm,u16CNR,u32DutyCycle);
 }
 
+extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; //      (8)         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER: please don't change it
+
 void PWM_ConfigOutputChannel_v3(PWM_T *pwm)
 {
     /* this table is mapping divider value to register configuration */

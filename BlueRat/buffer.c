@@ -315,15 +315,15 @@ uint8_t IR_output_read(uint32_t *return_value_ptr)
 void Copy_Input_Data_to_PWM_Data_and_Start(void)
 {
     uint32_t *src = u32Buffer_IR_DATA_Width, *end = IR_BUF_DATA_WRITE_PTR;
-    const uint32_t pwm_period = Get_PWM_period();
+    const uint32_t pwm_period = Get_PWM_period() * PWM_CLOCK_UNIT_DIVIDER / 8; // please note that we change unit of PWM-clock from 1/8 us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
     const uint32_t pwm_high = ( pwm_period * Get_PWM_duty_cycle() * 2 + 1  ) / 200;
     const uint32_t pwm_low = pwm_period - pwm_high;
     PWM_BUF_WRITE_PTR = T_PWM_BUFFER_Buf; // Destination from beginning
     while(src<end)
     {
         // Calculate PWM high pulse
-        const uint32_t high_width = (*src++) * 8;       // please note that we use 1/8 as unit of PWM-clock
-        const uint32_t low_width = (*src++) * 8;        // please note that we use 1/8 as unit of PWM-clock
+        const uint32_t high_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER;       // please note that we change unit of PWM-clock from 1us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
+        const uint32_t low_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER;        // please note that we change unit of PWM-clock from 1us to 1/PWM_CLOCK_UNIT_DIVIDER (us)
         const uint32_t complete_cycle = high_width / pwm_period;
         const uint32_t remaining_width = high_width - (pwm_period*complete_cycle);
        

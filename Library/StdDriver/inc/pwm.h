@@ -198,8 +198,6 @@ void PWM_DisableInt(PWM_T *pwm, uint32_t u32ChannelNum);
 void PWM_ClearIntFlag(PWM_T *pwm, uint32_t u32ChannelNum);
 uint32_t PWM_GetIntFlag(PWM_T *pwm, uint32_t u32ChannelNum);
 
-#define PWM_CLOCK_UNIT_DIVIDER      (8)         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER: please don't change it
-
 /*@}*/ /* end of group N575_PWM_EXPORTED_FUNCTIONS */
 
 /*@}*/ /* end of group N575_PWM_Driver */

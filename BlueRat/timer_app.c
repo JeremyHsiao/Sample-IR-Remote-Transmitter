@@ -40,6 +40,8 @@ void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycl
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
 
+const uint32_t PWM_CLOCK_UNIT_DIVIDER = 4;         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER
+
 void PWM_Set_Pulse_Tuple(T_PWM_BUFFER pwm_tuple)
 {
     PWM_internal_PWM_pulse_repeat_counter = pwm_tuple.repeat_no;
@@ -54,26 +56,23 @@ void PWM_Load_Internal_Counter(void)
 
 void PWM0_IRQHandler(void)
 {
-    PWM_ClearIntFlag(PWM0, 0);
-
-    if(PWM_internal_PWM_pulse_repeat_counter==0)         
+    if((PWM_internal_PWM_pulse_repeat_counter==0)&&(IR_Repeat_Cnt==0))         
     {
-        PWM_DisableInt(PWM0, 0x0);
         // End of all data, stop PWM
         PWM0->CTL &= ~(PWM_CTL_CNTEN0_Msk | PWM_CTL_CNTEN1_Msk);  // stop-run for both PWM
+        PWM_DisableInt(PWM0, 0x0);
         IR_Transmitter_Running = 0;
-        IR_Finish_Tx_ALL_RC = 1;
     }
     else
     {
         // Refresh PWM counter value
         PWM_Load_Internal_Counter();
-        
-        if(--PWM_internal_PWM_pulse_repeat_counter==0)         
+        --PWM_internal_PWM_pulse_repeat_counter;
+        if(PWM_internal_PWM_pulse_repeat_counter==0)         
         {
             // If this time is the last repeat time of current PWM tuple,  load next tuple
             T_PWM_BUFFER temp_pwm;
-            if(PWM_Pulse_read(&temp_pwm)!=0)   
+            if(PWM_Pulse_read(&temp_pwm)!=FALSE)   
             {
                 // not end of pulse, load next tuple
                 PWM_Set_Pulse_Tuple(temp_pwm);
@@ -81,8 +80,9 @@ void PWM0_IRQHandler(void)
             else
             {   
                 // end of pulse, check if IR_Repeat_Cnt is > zero
-                if(IR_Repeat_Cnt-->0)
+                if(IR_Repeat_Cnt>0)
                 {
+                    IR_Repeat_Cnt--;
                     // if yes, reset IR data pointer and start to load again
                     PWM_Pulse_restart_read_pointer();
                     PWM_Pulse_read(&temp_pwm);
@@ -93,13 +93,14 @@ void PWM0_IRQHandler(void)
                     // no more to repeat, Follow instruction of Nuvoton: set period=0 and disable PWM at next interrupt
                     PWM0->PERIOD0 = 0;
                     PWM0->PERIOD1 = 0;
+                    IR_Finish_Tx_ALL_RC = 1;
                 }
                 IR_Finish_Tx_one_RC = 1;
             }
         }
         // If not the last repeat time of current PWM tuple, PWM_Load_Internal_Counter() is sufficient 
     }
-
+    PWM_ClearIntFlag(PWM0, 0);
     WDT_ResetCounter();
 }
 
@@ -271,7 +272,7 @@ void PWM_Transmit_Buffer_StartSend(void)
 
     PWM_Pulse_restart_read_pointer();
 	// Get next pulse width and level
-	if(PWM_Pulse_read(&temp_pwm)) 
+	if(PWM_Pulse_read(&temp_pwm)!=FALSE) 
 	{
 		// Load 1st PWM value tuple
         IR_Transmitter_Running = 1;
@@ -285,6 +286,7 @@ void PWM_Transmit_Buffer_StartSend(void)
         PWM_EnableInt(PWM0, 0x0, 0);
         PWM_EnableOutput(PWM0, 0x3);
         //PWM_EnableOutput(PWM0, 0x3); // Enable Output of both Channels at once
+        
         PWM_Start_v3(PWM0);
         //TIMER_Start(WIDTH_TIMER);
         
