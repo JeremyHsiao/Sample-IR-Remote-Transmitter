@@ -320,19 +320,19 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
     const uint32_t pwm_period = Get_PWM_period() * PWM_CLOCK_UNIT_DIVIDER * (PWM_CLOCK_1MS_TICK/8) / 1000; // Get_PWM_period() * PWM_CLOCK_UNIT_DIVIDER / 8 * PWM_CLOCK_1MS_TICK / 1000; 
     const uint32_t pwm_high = ( pwm_period * Get_PWM_duty_cycle() * 2 + 1  ) / 200;
     const uint32_t pwm_low = pwm_period - pwm_high;
+    uint64_t       temp_low_width;
     PWM_BUF_WRITE_PTR = T_PWM_BUFFER_Buf; // Destination from beginning
     while(src<end)
     {
         // Calculate PWM high pulse - width is ticks ticks in us -> pwm-prescaler* more ticks with such pwm-clock (assumed 48MHz) setting in us ==> pwm-clock is actually PWM_CLOCK_1MS_TICK/1000 in terms of 1us-duration
         const uint32_t high_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER * PWM_CLOCK_1MS_TICK / 1000;      
-        const uint32_t low_width = (*src++) * PWM_CLOCK_UNIT_DIVIDER * PWM_CLOCK_1MS_TICK / 1000;       
+        //const uint64_t low_width = ;       
         const uint32_t complete_cycle = high_width / pwm_period;
-        const uint32_t remaining_width = high_width - (pwm_period*complete_cycle);
         const uint32_t buffer_limit = 0x10000;
-        uint32_t       temp_total_width; 
+        temp_low_width = pwm_low + ((uint64_t)(*src++)) * PWM_CLOCK_UNIT_DIVIDER * PWM_CLOCK_1MS_TICK / 1000; 
        
-        // Case 1: remaining is a (high + some low) pulse -> last remaining pulse is a complete high & low_cnt combines with next low-pulse
-        if(remaining_width>=pwm_high)
+        // Case 1: remaining is not zero -> last is extended to a *complete* but low_cnt combines with next low-pulse
+        if((high_width - (pwm_period*complete_cycle))>0)
         {
             PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
             PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
@@ -340,20 +340,8 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
             PWM_BUF_WRITE_PTR++;
             PWM_BUF_WRITE_PTR->repeat_no = 1;
             PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
-            PWM_BUF_WRITE_PTR->low_cnt = low_width + (remaining_width - pwm_high);
         }
-        // Case 2: remaining is partial high --> last remaining pulse is a partial high and low_cnt is the whole low-IR-pulse coming next.
-        else if (remaining_width>0)
-        {
-            PWM_BUF_WRITE_PTR->repeat_no=complete_cycle;
-            PWM_BUF_WRITE_PTR->high_cnt=pwm_high;
-            PWM_BUF_WRITE_PTR->low_cnt=pwm_low;
-            PWM_BUF_WRITE_PTR++;
-            PWM_BUF_WRITE_PTR->repeat_no = 1;
-            PWM_BUF_WRITE_PTR->high_cnt = remaining_width;
-            PWM_BUF_WRITE_PTR->low_cnt = low_width;
-        }
-        // Case 3: No Remaining --> last *complete* pulse is a a complete high & low_cnt is a complete low + low-IR-pulse coming next.
+        // Case 2: No Remaining --> last is simply the same except low_cnt combines with next low-pulse
         else
         {
             PWM_BUF_WRITE_PTR->repeat_no=complete_cycle-1;
@@ -362,31 +350,36 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
             PWM_BUF_WRITE_PTR++;
             PWM_BUF_WRITE_PTR->repeat_no = 1;
             PWM_BUF_WRITE_PTR->high_cnt = pwm_high;
-            PWM_BUF_WRITE_PTR->low_cnt = low_width + pwm_low;
         }
         // Check if current (high_cnt+low_cnt) is > 0x10000, 
-        temp_total_width = PWM_BUF_WRITE_PTR->high_cnt + PWM_BUF_WRITE_PTR->low_cnt;
-        if(temp_total_width>=buffer_limit)        
+        // Assumption: high_cnt is always short (< then 0x1000) and only low_cnt could be very long
+        if((temp_low_width+pwm_high)<buffer_limit)        
+        {
+            // if no, use it as low_cnt directly
+            PWM_BUF_WRITE_PTR->low_cnt = (uint32_t)temp_low_width;
+            PWM_BUF_WRITE_PTR++;
+        }
+        else    
         {
             // if yes, update last packet 
-            const uint32_t long_wait_cnt = buffer_limit - (PWM_CLOCK_UNIT_DIVIDER*0x200); // make sure last low-pulse packet has min. 512(us) length
+            const uint32_t long_wait_cnt = buffer_limit - 0x2000; // to make sure there are some remaining length at last wait packet & (high_cnt+long_wait_cnt)< buffer_limit
             PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
             PWM_BUF_WRITE_PTR++;
             
-            // and separate very long low-pulse into several data packet where high_cnt==0
-            temp_total_width -= long_wait_cnt;    
+            // and start to separate very long low-pulse into several data packet where high_cnt==0
+            temp_low_width -= long_wait_cnt;    
             // if still to larger, divide until it is not too large
-            if(temp_total_width>=buffer_limit)        
+            if(temp_low_width>=buffer_limit)        
             {
                 // prepare long-delay packet
                 PWM_BUF_WRITE_PTR->repeat_no = 1;
                 PWM_BUF_WRITE_PTR->high_cnt = 0;
                 PWM_BUF_WRITE_PTR->low_cnt = long_wait_cnt;
-                temp_total_width -= long_wait_cnt;   
-                while(temp_total_width>=buffer_limit)
+                temp_low_width -= long_wait_cnt;   
+                while(temp_low_width>=buffer_limit)
                 {                    
                     PWM_BUF_WRITE_PTR->repeat_no++;
-                    temp_total_width -= long_wait_cnt;   
+                    temp_low_width -= long_wait_cnt;   
                 }
                 PWM_BUF_WRITE_PTR++;
             }
@@ -394,12 +387,7 @@ void Copy_Input_Data_to_PWM_Data_and_Start(void)
             // Pack the remaining low-pulse
             PWM_BUF_WRITE_PTR->repeat_no = 1;
             PWM_BUF_WRITE_PTR->high_cnt = 0;
-            PWM_BUF_WRITE_PTR->low_cnt = temp_total_width;
-            PWM_BUF_WRITE_PTR++;
-        }
-        else
-        {
-            // no need to update last packet, just move on
+            PWM_BUF_WRITE_PTR->low_cnt = temp_low_width;
             PWM_BUF_WRITE_PTR++;
         }
         
