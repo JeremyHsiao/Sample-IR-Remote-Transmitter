@@ -78,10 +78,10 @@ uint8_t UART_BUF_TX_FULL = 0;
 
 // Store inputing IR data from UART    
 // IR-Data Array
-#define IR_DATA_BUF_SIZE      256
+#define IR_DATA_BUF_SIZE      384
 uint32_t u32Buffer_IR_DATA_Width[IR_DATA_BUF_SIZE];
 uint32_t *IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;
-
+/*
 // Use as data for Tx output
 // IR-pulse-TX Array
 #define IR_TX_BUF_SIZE      IR_DATA_BUF_SIZE
@@ -89,14 +89,14 @@ uint32_t u32Buffer_IR_TX_Width[IR_TX_BUF_SIZE];
 uint32_t *IR_BUF_TX_WRITE_PTR =u32Buffer_IR_TX_Width;
 uint32_t *IR_BUF_TX_REAR_PTR =u32Buffer_IR_TX_Width;
 uint8_t IR_BUF_TX_FULL = 0;
-
+*/
 // New Tx mechanism -- try to use solely PWM
 // IR-PWM-Pulse-Array
 #define IR_PWM_BUF_SIZE      (IR_DATA_BUF_SIZE)
 T_PWM_BUFFER T_PWM_BUFFER_Buf[IR_PWM_BUF_SIZE];
 T_PWM_BUFFER *PWM_BUF_WRITE_PTR =T_PWM_BUFFER_Buf;
 T_PWM_BUFFER *PWM_BUF_READ_PTR =T_PWM_BUFFER_Buf;
-uint8_t PWM_BUF_FULL = 0;
+//uint8_t PWM_BUF_FULL = 0;
 
 //
 // Common function
@@ -104,9 +104,9 @@ uint8_t PWM_BUF_FULL = 0;
 
 void Init_IR_buffer(void)
 {
-  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_REAR_PTR, u32Buffer_IR_TX_Width, IR_BUF_TX_FULL);
-  //  
-  BUF_CLEAR(IR_BUF_TX_WRITE_PTR, IR_BUF_TX_WRITE_PTR, u32Buffer_IR_DATA_Width, IR_BUF_TX_FULL);
+  IR_BUF_DATA_WRITE_PTR = u32Buffer_IR_DATA_Width;  
+  PWM_BUF_WRITE_PTR =T_PWM_BUFFER_Buf;
+  PWM_BUF_READ_PTR =T_PWM_BUFFER_Buf;
 }
 
 void Initialize_buffer(void)
@@ -156,7 +156,7 @@ uint8_t uart_input_dequeue(void)
   if(!(UART_BUF_RX_WRITE_PTR==UART_BUF_RX_REAR_PTR))
   {
     BUF_PTR_INCREASE(UART_BUF_RX_REAR_PTR,u8Buffer_RX,UART_RX_BUF_SIZE);
-    UART0->INTEN &= ~UART_INTEN_RDAIEN_Msk; // update buffer-full status in the block where UART-RX interrupt is diaabled temporarily.sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+    UART0->INTEN &= ~UART_INTEN_RDAIEN_Msk; // update buffer-full status in the block where UART-RX interrupt is diaabled temporarily.
     BUF_FULL_CHECK(UART_BUF_RX_WRITE_PTR,UART_BUF_RX_REAR_PTR,UART_RX_BUF_SIZE,UART_BUF_RX_FULL);  
     UART0->INTEN |= UART_INTEN_RDAIEN_Msk;
   }
@@ -261,7 +261,7 @@ uint8_t IR_data_add(uint32_t input_data)
     return FALSE;
   }
 }
-
+/*
 void Copy_Input_Data_to_Tx_Data_and_Start(void)
 {
     uint32_t *src = u32Buffer_IR_DATA_Width, *end = IR_BUF_DATA_WRITE_PTR;
@@ -304,7 +304,7 @@ uint8_t IR_output_read(uint32_t *return_value_ptr)
     return FALSE;
   }
 }
-
+*/
 //
 // PWM-pulse Array function
 //

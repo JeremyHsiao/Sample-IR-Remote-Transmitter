@@ -153,7 +153,7 @@ uint8_t Get_IR_Tx_Finish_All_status(void)
 {
     return IR_Finish_Tx_ALL_RC;
 }
-
+/*
 void Restart_IR_Pulse(void)
 {
     PWM_SetOutputPulse_v2(PWM0, 20, 0);
@@ -268,7 +268,7 @@ void IR_Transmit_Buffer_StartSend(void)
         //uart_output_enqueue_with_newline('-');       // empty Tx buffer
 	}
 }
-
+*/
 void PWM_Transmit_Buffer_StartSend(void)
 {
     //uint32_t temp_width;

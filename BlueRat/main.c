@@ -229,16 +229,16 @@ int main(void)
     PWM_DisableInt(PWM0, 0x1);
         
     // Setup Timer
-    Timer_Init();    
+    //Timer_Init();    
 
     // Setup Analog Comparator
     ACMP_Open(ACMP,1,ACMP_CMP1VNEG_VBG,0);
     ACMP_ENABLE_INT(ACMP,1);
 
-    NVIC_EnableIRQ(PWM0_IRQn);   // PWM interrup not used at this moment
+    NVIC_EnableIRQ(PWM0_IRQn);  
     //NVIC_DisableIRQ(PWM0_IRQn);
     //NVIC_EnableIRQ(TMR0_IRQn);	
-    NVIC_DisableIRQ(TMR0_IRQn);
+    NVIC_DisableIRQ(TMR0_IRQn);      // Timer interrup not used at this moment
     NVIC_EnableIRQ(ACMP_IRQn);
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
