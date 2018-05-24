@@ -126,16 +126,28 @@ void ProcessInputCommand(void)
                     temp_pb = PB->PIN;
                     if(temp_pb & 0x2)               // PB1
                     { 
-                        input_data = 0x10;
+                        if(Check_PB1_Timeout_Status()!=0)       // already time-out so no need to force the value to low
+                        {
+                            input_data = 0x10;
+                        }
+                        else
+                        {    
+                            input_data = 0x00;
+                        }    
                     } 
                     else 
                     { 
                         input_data = 0x0; 
                     } 
+                    
                     if(temp_pb&0x80)                // PB7
                     {
-                        input_data |= 0x20;
+                        if(Check_PB7_Timeout_Status()!=0)
+                        {    
+                            input_data |= 0x20;
+                        }    
                     }
+                    
                     temp_pa &= 0xcc00; // keep PA15/PA14/PA11/PA10
                     input_data |= ((temp_pa>>10)&0x03) | ((temp_pa>>12)&0x0c);
                     OutputString(_CMD_GPIO_INPUT_RETURN_HEADER_ "0x");
@@ -253,6 +265,14 @@ void ProcessInputCommand(void)
             uart_output_enqueue('\n');
             break;
                 
+        case ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME:
+            {   
+                uint32_t temp = Next_Input_Parameter_Get();
+                Set_TimeoutTime_PB1(temp & 0x0000ffff);
+                Set_TimeoutTime_PB7((temp & 0xffff0000)>>16);
+            }    
+            break;
+
         default:
             //uart_output_enqueue_with_newline('U');
             //OutputHexValue(Next_Command_Get());

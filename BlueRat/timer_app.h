@@ -32,6 +32,14 @@ extern void         Set_PWM_duty_cycle(uint32_t duty_cycle);
 extern void         Setup_IR_PWM_Pulse(void);
 extern void         Timer_Init(void);
 
+extern void Init_TIMER1(void);
+extern uint8_t Check_PB1_Timeout_Status(void);
+extern uint8_t Check_PB7_Timeout_Status(void);
+extern void Set_TimeoutTime_PB1(uint32_t target_timer_value); // target_timer_value unit is ms
+extern void Set_TimeoutTime_PB7(uint32_t target_timer_value); // target_timer_value unit is ms
+
+#define TIMER1_DEFAULT_TIMEOUT_TIME     1000          // 1000ms
+
 extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; 
 
 #endif /* end _TIMER_APP_H_ */

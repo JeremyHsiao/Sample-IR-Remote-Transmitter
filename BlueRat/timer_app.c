@@ -17,7 +17,7 @@
 #include "parser.h"
 #include "timer_app.h"
 
-#define     WIDTH_TIMER     (TIMER0)
+//#define     WIDTH_TIMER     (TIMER0)
 
 uint8_t	    IR_Transmitter_Running;
 uint8_t	    IR_Finish_Tx_one_RC;
@@ -39,6 +39,10 @@ uint32_t    Get_PWM_duty_cycle(void) { return PWM_duty_cycle; }
 void        Set_PWM_duty_cycle(uint32_t duty_cycle) { PWM_duty_cycle = duty_cycle; }
 //uint32_t    Get_Tx_Level(void) { return bLevel; }
 //void        Set_Tx_Level(uint32_t level) { bLevel = level; }
+
+uint32_t    SW_Timeout_Time_PB1, SW_Timeout_Time_PB7;
+uint8_t     SW_Timeout_PB1, SW_Timeout_PB7;
+uint32_t    SW_Timer_PB1, SW_Timer_PB7;
 
 const uint32_t PWM_CLOCK_UNIT_DIVIDER = 8;         // pwm-clock is 1/PWM_CLOCK_UNIT_DIVIDER
 
@@ -122,6 +126,7 @@ void Init_Timer_App(void)
     PWM_duty_cycle = 33;
     bLevel = 1;
     PWM_Clear_Pulse_Tuple();
+    Init_TIMER1();
 }
 
 void Reset_IR_Tx_running_status(void)
@@ -303,6 +308,136 @@ void PWM_Transmit_Buffer_StartSend(void)
 	{
         //uart_output_enqueue_with_newline('-');       // empty Tx buffer - shouldn't be here
 	}
+}
+
+//
+// Timer1 is used for debouncing.
+//
+
+// GPIO part of code which is used for debouncing  
+void EINT1_IRQHandler(void)     // GPIO interrupt for PB1
+{
+    if(GPIO_GET_INT_FLAG(PB,0x1<<1))
+    {    
+        SW_Timer_PB1 = SW_Timeout_Time_PB1;
+        SW_Timeout_PB1 = 0;
+        GPIO_CLR_INT_FLAG(PB,1<<1);     // PB1
+    }    
+}
+ 
+void GPAB_IRQHandler(void)      // GPIO interrupt except PB0/PB1
+{
+    if(GPIO_GET_INT_FLAG(PB,0x1<<7))
+    {
+        SW_Timer_PB7 = SW_Timeout_Time_PB7;
+        SW_Timeout_PB7 = 0;
+        GPIO_CLR_INT_FLAG(PB,1<<7);     // PB7
+    }   
+}
+
+// End of GPIO part of code
+
+#define TMR1_PRESCALER      (1)     // minus 1 before writing to register
+#define TMR1_TICK_CNT       (2)
+#define TMR1_MS_CNT_VALUE   (16/(TMR1_TICK_CNT*TMR1_PRESCALER))   
+
+void Init_TIMER1(void)
+{
+    TIMER1->CTL = TMR_CTL_RSTCNT_Msk;
+    SW_Timeout_Time_PB1 = SW_Timeout_Time_PB7 = (TIMER1_DEFAULT_TIMEOUT_TIME*TMR1_MS_CNT_VALUE);
+    SW_Timer_PB1 = SW_Timer_PB7 = 0;   
+    SW_Timeout_PB1 = SW_Timeout_PB7 = 1;
+    TIMER1->CMP = TMR1_TICK_CNT;           // interrupt every TMR1_TICK_CNT*TMR1_PRESCALER/16 ms = 1/8 ms
+    TIMER1->CTL = (TIMER_PERIODIC_MODE) | (TMR1_PRESCALER-1) | TMR_CTL_CNTEN_Msk | TMR_CTL_INTEN_Msk;
+}    
+
+uint8_t Check_PB1_Timeout_Status(void)
+{
+    uint8_t bRet;
+    if(SW_Timeout_Time_PB1==0)  // if timeout_time is 0, always return timeout_true
+    {
+        bRet = 1;
+    }
+    else
+    {
+        bRet = SW_Timeout_PB1;
+    }    
+    return bRet;
+}
+
+uint8_t Check_PB7_Timeout_Status(void)
+{
+    uint8_t bRet;
+    if(SW_Timeout_Time_PB7==0)  //  if timeout_time is 0, always return timeout_true
+    {
+        bRet = 1;
+    }
+    else
+    {
+        bRet = SW_Timeout_PB7;
+    }    
+    return bRet;
+}
+
+void Set_TimeoutTime_PB1(uint32_t target_timer_value) // target_timer_value unit is ms
+{    
+    if(target_timer_value==0)
+    {
+        SW_Timer_PB1 = 0;      // force to stop sw timer if timeout time is 0ms
+        SW_Timeout_PB1 = 1;
+        SW_Timeout_Time_PB1 = 0;
+    }
+    else 
+    {
+        if(target_timer_value>=(1<<24))
+        {
+            target_timer_value = (1<<24)-1;
+        }
+        SW_Timeout_Time_PB1 = target_timer_value *= TMR1_MS_CNT_VALUE;
+    }
+}    
+
+void Set_TimeoutTime_PB7(uint32_t target_timer_value) // target_timer_value unit is ms
+{    
+    if(target_timer_value==0)
+    {
+        SW_Timer_PB7 = 0;      // force to stop sw timer if timeout time is 0ms
+        SW_Timeout_PB7 = 1;
+        SW_Timeout_Time_PB7 = 0;
+    }
+    else 
+    {
+        if(target_timer_value>=(1<<24))
+        {
+            target_timer_value = (1<<24)-1;
+        }
+        SW_Timeout_Time_PB7 = target_timer_value *= TMR1_MS_CNT_VALUE;
+    }   
+}    
+
+void TMR1_IRQHandler(void)
+{
+    // Assumed that SW_Timeout_Time_PBx is non-zero,
+    // When it is set to zero, SW_Timer_PBx is set to 0 & SW_Timeout_PBx to 1 
+    // Therefore, we don't check if SW_Timeout_Time_PBx is zero or not
+    if(SW_Timer_PB1)
+    {
+        SW_Timer_PB1--;
+    }
+    else
+    {
+        SW_Timeout_PB1 = 1;
+    }
+    
+    if(SW_Timer_PB7)
+    {
+        SW_Timer_PB7--;
+    }
+    else
+    {
+        SW_Timeout_PB7 = 1;
+    }
+    TIMER_ClearIntFlag(TIMER1);	
 }
 
 ///******************************************************************************

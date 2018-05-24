@@ -91,6 +91,7 @@ void SYS_Init(void)
     CLK_EnableModuleClock(UART_MODULE);
     CLK_EnableModuleClock(PWM0_MODULE);
     CLK_EnableModuleClock(TMR0_MODULE);
+    CLK_EnableModuleClock(TMR1_MODULE);
     CLK_EnableModuleClock(WDT_MODULE);
     CLK_EnableModuleClock(ACMP_MODULE);	
     CLK_EnableModuleClock(ISP_MODULE);
@@ -99,6 +100,7 @@ void SYS_Init(void)
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
+    CLK_SetModuleClock(TMR1_MODULE, CLK_CLKSEL1_TMR1SEL_LIRC, 0);   // Use 16KHz
 
     // Select WDT clock
     CLK_SetModuleClock(WDT_MODULE,CLK_CLKSEL1_WDTSEL_LIRC,0);  // Use 10K clock
@@ -170,6 +172,8 @@ void SYS_Init(void)
     GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT1, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT7, GPIO_MODE_QUASI);
+    GPIO_EnableInt(PB, 1, GPIO_INT_FALLING);    // Add GPIO PB1 falling-edge interrupt 
+    GPIO_EnableInt(PB, 7, GPIO_INT_FALLING);    // Add GPIO PB7 falling-edge interrupt 
     //GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
     // Set output as 1 for all Quasi-bidirectional mode GPIO
     PA->DATMSK = ~(GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
@@ -187,6 +191,7 @@ void SYS_Init(void)
     SYS_ResetModule(UART0_RST);
     SYS_ResetModule(I2C0_RST);
     SYS_ResetModule(TMR0_RST);
+    SYS_ResetModule(TMR1_RST);
     SYS_ResetModule(ACMP_RST);
     SYS_ResetModule(ANA_RST);
 
@@ -238,8 +243,11 @@ int main(void)
     NVIC_EnableIRQ(PWM0_IRQn);  
     //NVIC_DisableIRQ(PWM0_IRQn);
     //NVIC_EnableIRQ(TMR0_IRQn);	
-    NVIC_DisableIRQ(TMR0_IRQn);      // Timer interrup not used at this moment
+    NVIC_DisableIRQ(TMR0_IRQn);      // Timer0 interrupt not used at this moment
+    NVIC_EnableIRQ(TMR1_IRQn);	
     NVIC_EnableIRQ(ACMP_IRQn);
+    NVIC_EnableIRQ(EINT1_IRQn);      // Interrupt for PB1
+    NVIC_EnableIRQ(GPAB_IRQn);       // Interrupt for GPIO -- used for PB7      
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
     WDT_MySetup();
