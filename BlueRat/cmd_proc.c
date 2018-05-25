@@ -265,11 +265,17 @@ void ProcessInputCommand(void)
             uart_output_enqueue('\n');
             break;
                 
-        case ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME:
+        case ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB1:
             {   
                 uint32_t temp = Next_Input_Parameter_Get();
-                Set_TimeoutTime_PB1(temp & 0x0000ffff);
-                Set_TimeoutTime_PB7((temp & 0xffff0000)>>16);
+                Set_TimeoutTime_PB1(temp & 0x00ffffff);
+            }    
+            break;
+
+        case ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB7:
+            {   
+                uint32_t temp = Next_Input_Parameter_Get();
+                Set_TimeoutTime_PB7(temp & 0x00ffffff);
             }    
             break;
 

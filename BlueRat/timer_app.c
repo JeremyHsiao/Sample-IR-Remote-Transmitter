@@ -337,9 +337,10 @@ void GPAB_IRQHandler(void)      // GPIO interrupt except PB0/PB1
 
 // End of GPIO part of code
 
+// Please note that we select 16KHz clock as source of Timer 1
 #define TMR1_PRESCALER      (1)     // minus 1 before writing to register
 #define TMR1_TICK_CNT       (2)
-#define TMR1_MS_CNT_VALUE   (16/(TMR1_TICK_CNT*TMR1_PRESCALER))   
+#define TMR1_MS_CNT_VALUE   (16/(TMR1_TICK_CNT*TMR1_PRESCALER))   // current TMR1 software timer is 1/TMR1_MS_CNT_VALUE == 1/8 ms for every tick
 
 void Init_TIMER1(void)
 {
@@ -393,7 +394,7 @@ void Set_TimeoutTime_PB1(uint32_t target_timer_value) // target_timer_value unit
         {
             target_timer_value = (1<<24)-1;
         }
-        SW_Timeout_Time_PB1 = target_timer_value *= TMR1_MS_CNT_VALUE;
+        SW_Timeout_Time_PB1 = target_timer_value;
     }
 }    
 
@@ -411,7 +412,7 @@ void Set_TimeoutTime_PB7(uint32_t target_timer_value) // target_timer_value unit
         {
             target_timer_value = (1<<24)-1;
         }
-        SW_Timeout_Time_PB7 = target_timer_value *= TMR1_MS_CNT_VALUE;
+        SW_Timeout_Time_PB1 = target_timer_value;
     }   
 }    
 
