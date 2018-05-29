@@ -412,7 +412,7 @@ void Set_TimeoutTime_PB7(uint32_t target_timer_value) // target_timer_value unit
         {
             target_timer_value = (1<<24)-1;
         }
-        SW_Timeout_Time_PB1 = target_timer_value;
+        SW_Timeout_Time_PB7 = target_timer_value;
     }   
 }    
 
