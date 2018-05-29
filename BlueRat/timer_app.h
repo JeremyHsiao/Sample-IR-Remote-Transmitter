@@ -38,7 +38,7 @@ extern uint8_t Check_PB7_Timeout_Status(void);
 extern void Set_TimeoutTime_PB1(uint32_t target_timer_value); // target_timer_value unit is ms
 extern void Set_TimeoutTime_PB7(uint32_t target_timer_value); // target_timer_value unit is ms
 
-#define TIMER1_DEFAULT_TIMEOUT_TIME     1000          // 1000ms
+#define TIMER1_DEFAULT_TIMEOUT_TIME     0          // 0ms means disable debounce function
 
 extern const uint32_t PWM_CLOCK_UNIT_DIVIDER; 
 
