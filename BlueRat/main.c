@@ -131,9 +131,12 @@ void SYS_Init(void)
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA10MFP_Msk) ) | SYS_GPA_MFP_PA10MFP_GPIO;
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA11MFP_Msk) ) | SYS_GPA_MFP_PA11MFP_GPIO;                                                                                                                                                                                                                                                           
 
-    /* Set GPA multi-function pins for PWM0/1 Channel */ // PA12 & P13
-    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
-    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA13MFP_Msk) ) | SYS_GPA_MFP_PA13MFP_PWM0CH1;
+    // PWM pin is selected only after it is used
+    ///* Set GPA multi-function pins for PWM0/1 Channel */ // PA12 & P13
+    //SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
+    //SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA13MFP_Msk) ) | SYS_GPA_MFP_PA13MFP_PWM0CH1;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_GPIO;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA13MFP_Msk) ) | SYS_GPA_MFP_PA13MFP_GPIO;
 
     // GPIO PA 14/15
     SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA14MFP_Msk) ) | SYS_GPA_MFP_PA14MFP_GPIO;
@@ -147,9 +150,10 @@ void SYS_Init(void)
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB2MFP_Msk) ) | SYS_GPB_MFP_PB2MFP_I2C_SCL;
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB3MFP_Msk) ) | SYS_GPB_MFP_PB3MFP_I2C_SDA;
     
-    /* Set GPB multi-function pins for PWM0/1 Channel Inverted output */ // PB4 & PB5
-    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_PWM0CH0_INV;
-    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB5MFP_Msk) ) | SYS_GPB_MFP_PB5MFP_PWM0CH1_INV;
+    // PWM pin is selected only after it is used
+    ///* Set GPB multi-function pins for PWM0/1 Channel Inverted output */ // PB4 & PB5
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_GPIO;
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB5MFP_Msk) ) | SYS_GPB_MFP_PB5MFP_GPIO;
     
     // Setup PB6 as comparator
     SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB6MFP_Msk) ) | SYS_GPB_MFP_PB6MFP_CMP6;
@@ -181,9 +185,14 @@ void SYS_Init(void)
     PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
     //PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
     PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
-    // Set output as 0 for all PWM mode GPIO
+    
+    // Set output as 1 for all PWM mode GPIO (1 to inverted PWM GPIO)
+    GPIO_SetMode(PA, BIT8, GPIO_MODE_OUTPUT);
+    GPIO_SetMode(PA, BIT9, GPIO_MODE_OUTPUT);
     PA->DATMSK = ~(GPIO_DOUT_DOUT12_Msk|GPIO_DOUT_DOUT13_Msk);
-    PA->DOUT = ~(GPIO_DOUT_DOUT12_Msk|GPIO_DOUT_DOUT13_Msk);
+    PA->DOUT = (GPIO_DOUT_DOUT12_Msk|GPIO_DOUT_DOUT13_Msk);
+    GPIO_SetMode(PB, BIT4, GPIO_MODE_OUTPUT);
+    GPIO_SetMode(PB, BIT5, GPIO_MODE_OUTPUT);
     PB->DATMSK = ~(GPIO_DOUT_DOUT4_Msk|GPIO_DOUT_DOUT5_Msk);
     PB->DOUT = ~(GPIO_DOUT_DOUT4_Msk|GPIO_DOUT_DOUT5_Msk);
 

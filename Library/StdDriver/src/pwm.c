@@ -464,6 +464,14 @@ void PWM_DisableCapture(PWM_T *pwm, uint32_t u32ChannelMask)
 void PWM_EnableOutput(PWM_T *pwm, uint32_t u32ChannelMask)
 {
     (pwm)->POEN |= u32ChannelMask;
+    
+    /* Set GPA multi-function pins for PWM0/1 Channel */ // PA12 & P13
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA12MFP_Msk) ) | SYS_GPA_MFP_PA12MFP_PWM0CH0;
+    SYS->GPA_MFP  = (SYS->GPA_MFP & (~SYS_GPA_MFP_PA13MFP_Msk) ) | SYS_GPA_MFP_PA13MFP_PWM0CH1;
+
+    /* Set GPB multi-function pins for PWM0/1 Channel Inverted output */ // PB4 & PB5
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB4MFP_Msk) ) | SYS_GPB_MFP_PB4MFP_PWM0CH0_INV;
+    SYS->GPB_MFP  = (SYS->GPB_MFP & (~SYS_GPB_MFP_PB5MFP_Msk) ) | SYS_GPB_MFP_PB5MFP_PWM0CH1_INV;
 }
 
 /**
