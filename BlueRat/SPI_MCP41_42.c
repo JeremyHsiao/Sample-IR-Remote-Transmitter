@@ -19,38 +19,28 @@
 #define SPI_CK_Port			PA
 #define SPI_CK_Bitmask		(~(1<<13))		// to-be-updated
 
-static inline void BIT_SET(sfr,bitmask) //
-{
-  // mask value 0 means to write/clear
-  PA->DATMSK = bitmask;
-  PA->DOUT = 0xffffffff;
-}
-
-static inline void BIT_CLR(sfr,bitmask) //
-{
-  // mask value 0 means to write/clear
-  PA->DATMSK = bitmask;
-  PA->DOUT = 0;
-}
-
 void SPI_CS(uint8_t value)
 {
-	(value)?BIT_SET(SPI_CS_Port,SPI_CS_Bitmask):BIT_CLR(SPI_CS_Port,SPI_CS_Bitmask);
+	SPI_CS_Port->DATMSK = SPI_CS_Bitmask;
+	SPI_CS_Port->DOUT = (value)?0xffffffff:0;
 }
 
 void SPI_MOSI(uint8_t value)
 {
-	(value)?BIT_SET(SPI_MOSI_Port,SPI_MOSI_Bitmask):BIT_CLR(SPI_MOSI_Port,SPI_MOSI_Bitmask);
+	SPI_MOSI_Port->DATMSK = SPI_MOSI_Bitmask;
+	SPI_MOSI_Port->DOUT = (value)?0xffffffff:0;
 }
 
 void SPI_MISO(uint8_t value)
 {
-	(value)?BIT_SET(SPI_MISO_Port,SPI_MISO_Bitmask):BIT_CLR(SPI_MISO_Port,SPI_MISO_Bitmask);
+	SPI_MISO_Port->DATMSK = SPI_MISO_Bitmask;
+	SPI_MISO_Port->DOUT = (value)?0xffffffff:0;
 }
 
 void SPI_CK(uint8_t value)
 {
-	(value)?BIT_SET(SPI_CK_Port,SPI_CK_Bitmask):BIT_CLR(SPI_CK_Port,SPI_CK_Bitmask);
+	SPI_CK_Port->DATMSK = SPI_CK_Bitmask;
+	SPI_CK_Port->DOUT = (value)?0xffffffff:0;
 }
 
 
