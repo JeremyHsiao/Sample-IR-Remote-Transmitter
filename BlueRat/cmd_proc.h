@@ -61,7 +61,7 @@ typedef enum {
     ENUM_CMD_CODE_0XAD = 0xad,
     ENUM_CMD_CODE_0XAE = 0xae,
     ENUM_CMD_CODE_0XAF = 0xaf,
-    ENUM_CMD_CODE_0XB0 = 0xb0,
+    ENUM_CMD_SPI_MCP_41_42 = 0xb0,
     ENUM_CMD_CODE_0XB1 = 0xb1,
     ENUM_CMD_CODE_0XB2 = 0xb2,
     ENUM_CMD_CODE_0XB3 = 0xb3,

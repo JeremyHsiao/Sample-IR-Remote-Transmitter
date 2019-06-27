@@ -20,6 +20,7 @@
 #include "fmc.h"
 #include "cmd_proc.h"
 #include "version.h"
+#include "SPI_MCP41_42.h"
 
 #define ISP_PASSWORD  (0x46574154)         // input password is FWAT for entering ISP  
 #define RESTART_PASSWORD  (0x46535050)     // input password is FSPP for restart  
@@ -184,6 +185,20 @@ void ProcessInputCommand(void)
             }
             break;
 
+				case ENUM_CMD_SPI_MCP_41_42:
+           {
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+								spiWriteReg((output_data>>8), (output_data&0xff));
+//              bit_no = (output_data>>8)&0xff;
+//                output_data &= 0x01;
+//                //return_data = (bit_no<<4) | output_data;
+//                PA->DATMSK = ~(1UL<<bit_no);
+//                output_data <<= bit_no;
+//                PA->DOUT = output_data;
+					 }
+						break;
+						
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {
