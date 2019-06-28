@@ -185,20 +185,34 @@ void ProcessInputCommand(void)
             }
             break;
 
-				case ENUM_CMD_SPI_MCP_41_42:
+				case ENUM_CMD_SPI_WRITE_BYTE_MODE_00:
+						// CPOL = 0; CPHA = 0
+           {
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get() & 0xff;
+								spiWriteRegAddrOnly(output_data);
+					 }
+						break;
+
+				case ENUM_CMD_SPI_WRITE_WORD_MODE_00:
+						// CPOL = 0; CPHA = 0
            {
                 uint32_t output_data;
                 output_data = Next_Input_Parameter_Get() & 0xffff;
-								spiWriteReg((output_data>>8), (output_data&0xff));
-//              bit_no = (output_data>>8)&0xff;
-//                output_data &= 0x01;
-//                //return_data = (bit_no<<4) | output_data;
-//                PA->DATMSK = ~(1UL<<bit_no);
-//                output_data <<= bit_no;
-//                PA->DOUT = output_data;
+								spiWriteRegByte(((output_data>>8)&0xff), (output_data&0xff));
 					 }
 						break;
-						
+
+				case ENUM_CMD_SPI_WRITE_3_BYTE_MODE_00:
+						// CPOL = 0; CPHA = 0
+           {
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get() & 0xffffff;
+								spiWriteRegWord(((output_data>>16)&0xff), (output_data&0xffff));
+					 }
+
+						break;
+					 
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {

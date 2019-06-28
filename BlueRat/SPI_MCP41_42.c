@@ -45,11 +45,49 @@ void SPI_CK(uint8_t value)
 
 
 /**************************************************************************************
- * spiWriteReg
+ * spiWriteRegAddrOnly
  *
  * Writes to an 8-bit register with the SPI port
  **************************************************************************************/
-void spiWriteReg(const unsigned char regAddr, const unsigned char regData)
+void spiWriteRegAddrOnly(const unsigned char regAddr)
+{
+
+  unsigned char SPICount;                                       // Counter used to clock out the data
+
+  unsigned char SPIData;                                        // Define a data structure for the SPI data
+
+  SPI_CS(1);                                        		    // Make sure we start with active-low CS high
+  SPI_CK(0);                                        		    // and CK low
+
+  SPIData = regAddr;                                            // Preload the data to be sent with Address
+  SPI_CS(0);                                                    // Set active-low CS low to start the SPI cycle
+                                                                // Although SPIData could be implemented as an "int",
+                                                                // resulting in one
+                                                                // loop, the routines run faster when two loops
+                                                                // are implemented with
+                                                                // SPIData implemented as two "char"s.
+
+  for (SPICount = 0; SPICount < 8; SPICount++)                  // Prepare to clock out the Address byte
+  {
+    if (SPIData & 0x80)                                         // Check for a 1
+      SPI_MOSI(1);                                              // and set the MOSI line appropriately
+    else
+      SPI_MOSI(0);
+    SPI_CK(1);                                                  // Toggle the clock line
+    SPI_CK(0);
+    SPIData <<= 1;                                              // Rotate to get the next bit
+  }                                                             // and loop back to send the next bit
+
+  SPI_CS(1);
+  SPI_MOSI(0);
+}
+
+/**************************************************************************************
+ * spiWriteRegByte
+ *
+ * Writes to an 8-bit register with the SPI port
+ **************************************************************************************/
+void spiWriteRegByte(const unsigned char regAddr, const unsigned char regData)
 {
 
   unsigned char SPICount;                                       // Counter used to clock out the data
@@ -90,6 +128,69 @@ void spiWriteReg(const unsigned char regAddr, const unsigned char regData)
     SPI_CK(0);
     SPIData <<= 1;
   }
+  SPI_CS(1);
+  SPI_MOSI(0);
+}
+
+/**************************************************************************************
+ * spiWriteRegWord
+ *
+ * Writes to an 8-bit register with the SPI port
+ **************************************************************************************/
+void spiWriteRegWord(const unsigned char regAddr, const unsigned short regData)
+{
+
+  unsigned char SPICount;                                       // Counter used to clock out the data
+
+  unsigned char SPIData;                                        // Define a data structure for the SPI data
+
+  SPI_CS(1);                                        		    // Make sure we start with active-low CS high
+  SPI_CK(0);                                        		    // and CK low
+
+  SPIData = regAddr;                                            // Preload the data to be sent with Address
+  SPI_CS(0);                                                    // Set active-low CS low to start the SPI cycle
+                                                                // Although SPIData could be implemented as an "int",
+                                                                // resulting in one
+                                                                // loop, the routines run faster when two loops
+                                                                // are implemented with
+                                                                // SPIData implemented as two "char"s.
+
+  for (SPICount = 0; SPICount < 8; SPICount++)                  // Prepare to clock out the Address byte
+  {
+    if (SPIData & 0x80)                                         // Check for a 1
+      SPI_MOSI(1);                                              // and set the MOSI line appropriately
+    else
+      SPI_MOSI(0);
+    SPI_CK(1);                                                  // Toggle the clock line
+    SPI_CK(0);
+    SPIData <<= 1;                                              // Rotate to get the next bit
+  }                                                             // and loop back to send the next bit
+
+                                                                // Repeat for the Data byte
+  SPIData = (regData>>8)&0xff;                                  // Preload the data to be sent with Data
+  for (SPICount = 0; SPICount < 8; SPICount++)
+  {
+    if (SPIData & 0x80)
+        SPI_MOSI(1);                                             // and set the MOSI line appropriately
+    else
+        SPI_MOSI(0);
+    SPI_CK(1);                                                   // Toggle the clock line
+    SPI_CK(0);
+    SPIData <<= 1;
+  }
+
+  SPIData = regData&0xff;                                  			// Preload the data to be sent with Data
+  for (SPICount = 0; SPICount < 8; SPICount++)
+  {
+    if (SPIData & 0x80)
+        SPI_MOSI(1);                                             // and set the MOSI line appropriately
+    else
+        SPI_MOSI(0);
+    SPI_CK(1);                                                   // Toggle the clock line
+    SPI_CK(0);
+    SPIData <<= 1;
+  }
+
   SPI_CS(1);
   SPI_MOSI(0);
 }

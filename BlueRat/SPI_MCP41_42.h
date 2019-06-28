@@ -10,7 +10,9 @@
 #ifndef _SPI_MCP41_42_H_
 #define _SPI_MCP41_42_H_
 
-extern void spiWriteReg(const unsigned char regAddr, const unsigned char regData);
+extern void spiWriteRegAddrOnly(const unsigned char regAddr);
+extern void spiWriteRegByte(const unsigned char regAddr, const unsigned char regData);
+extern void spiWriteRegWord(const unsigned char regAddr, const unsigned short regData);
 
 #endif /* end _SPI_MCP41_42_H_ */
 /*****************************************************************************
