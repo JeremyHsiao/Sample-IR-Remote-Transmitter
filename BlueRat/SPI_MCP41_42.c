@@ -10,19 +10,6 @@
 #include "N575.h"
 #include "SPI_MCP41_42.h"
 
-#define SPI_CS_Port			PA
-#define SPI_CS_Pin			0
-#define SPI_CS_Bitmask		(~(1<<(SPI_CS_Pin)))		// to-be-updated
-#define SPI_MOSI_Port		PA
-#define SPI_MOSI_Pin		1
-#define SPI_MOSI_Bitmask	(~(1<<(SPI_MOSI_Pin)))		// to-be-updated
-#define SPI_CK_Port			PA
-#define SPI_CK_Pin			2
-#define SPI_CK_Bitmask		(~(1<<(SPI_CK_Pin)))		// to-be-updated
-#define SPI_MISO_Port		PA
-#define SPI_MISO_Pin		3
-#define SPI_MISO_Bitmask	(~(1<<(SPI_MISO_Pin)))		// to-be-updated
-
 void SPI_CS(uint8_t value)
 {
 	SPI_CS_Port->DATMSK = SPI_CS_Bitmask;

@@ -185,7 +185,22 @@ void ProcessInputCommand(void)
             }
             break;
 
-				case ENUM_CMD_SPI_WRITE_BYTE_MODE_00:
+        case ENUM_CMD_SPI_ENABLE_PB_PORT:
+            if(Next_Input_Parameter_Get() & 0xff)
+			{
+                GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_OUTPUT);
+                GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_OUTPUT);
+                GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_OUTPUT);
+			}
+			else
+			{
+                GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_QUASI);
+                GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_QUASI);
+                GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_QUASI);
+			}
+            break;
+
+        case ENUM_CMD_SPI_WRITE_BYTE_MODE_00:
 						// CPOL = 0; CPHA = 0
            {
                 uint32_t output_data;
@@ -194,7 +209,7 @@ void ProcessInputCommand(void)
 					 }
 						break;
 
-				case ENUM_CMD_SPI_WRITE_WORD_MODE_00:
+        case ENUM_CMD_SPI_WRITE_WORD_MODE_00:
 						// CPOL = 0; CPHA = 0
            {
                 uint32_t output_data;
@@ -203,7 +218,7 @@ void ProcessInputCommand(void)
 					 }
 						break;
 
-				case ENUM_CMD_SPI_WRITE_3_BYTE_MODE_00:
+        case ENUM_CMD_SPI_WRITE_3_BYTE_MODE_00:
 						// CPOL = 0; CPHA = 0
            {
                 uint32_t output_data;
