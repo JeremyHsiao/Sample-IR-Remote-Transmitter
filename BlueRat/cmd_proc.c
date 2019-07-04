@@ -244,6 +244,23 @@ void ProcessInputCommand(void)
         		I2C_Write_Word((uint8_t)((output_data>>16)&0xff), (uint16_t)(output_data&0xffff));
 		   	}
 			break;
+
+		case ENUM_CMD_I2C_READ_N_BYTE:
+           	{
+                uint32_t temp_data;
+				uint8_t  slvadr, regadr, n_byte;
+
+                temp_data = Next_Input_Parameter_Get() & 0xffffff;
+				n_byte = (uint8_t) (temp_data&0xff);
+				temp_data>>=8;
+				regadr = (uint8_t) (temp_data&0xff);
+				temp_data>>=8;
+				slvadr = (uint8_t) (temp_data&0xff);
+        		I2C_Read_N_Byte_from_RegAddr(slvadr, regadr, n_byte);
+				// To-be-implemented: return I2C readback data
+		   	}
+			break;
+
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {

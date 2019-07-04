@@ -78,7 +78,7 @@ void I2C_MasterRx(uint32_t u32Status)
         I2C_SET_DATA(I2C0, (g_u8DeviceAddr | 0x01));  /* Write SLA+R to Register I2CDAT */
         I2C_SET_CONTROL_REG(I2C0, I2C_SI);
     } else if (u32Status == 0x40) {             /* SLA+R has been transmitted and ACK has been received */
-		g_u8DataLen = 0;
+		g_u8DataLen = 0;  // reset g_u8DataLen
 		if(g_u8RxLen>0)
 		{
           	I2C_SET_CONTROL_REG(I2C0, I2C_AA | I2C_SI);
@@ -152,6 +152,11 @@ void I2C_MasterTx(uint32_t u32Status)
 		g_u8EndFlag = 1;
         //printf("Status 0x%x is NOT processed\n", u32Status);
     }
+}
+
+uint8_t GetDataIndex(uint8_t index)
+{
+	return 	g_au8TxData[index];
 }
 
 // g_u8DataLen =
@@ -235,6 +240,27 @@ uint8_t I2C_Write_Word(uint8_t slvaddr, uint16_t i2c_data)
 
         /* Wait I2C Tx Finish */
         while (g_u8EndFlag == 0);
+        g_u8EndFlag = 0;
+
+		return g_u8SuccessFlag;
+}
+
+uint8_t I2C_Read_N_Byte_from_RegAddr(uint8_t slvaddr, uint8_t regaddr, uint8_t n_byte)
+{
+ 		// Fill data
+		g_au8TxData[0] = regaddr;
+    	g_u8TxLen = 1;
+		g_u8RxLen = n_byte;
+        init_I2C_Write_global_variable(slvaddr);
+
+        /* I2C function to read data from slave */
+        s_I2C0HandlerFn = (I2C_FUNC)I2C_MasterRx;
+
+        I2C_SET_CONTROL_REG(I2C0, I2C_STA);
+
+        /* Wait I2C Rx Finish */
+        while (g_u8EndFlag == 0);
+
         g_u8EndFlag = 0;
 
 		return g_u8SuccessFlag;

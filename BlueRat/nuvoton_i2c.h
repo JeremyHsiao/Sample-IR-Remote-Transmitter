@@ -14,5 +14,7 @@
 
 extern uint8_t I2C_Write_Byte(uint8_t slvaddr, uint8_t  i2c_data);
 extern uint8_t I2C_Write_Word(uint8_t slvaddr, uint16_t i2c_data);
+extern uint8_t I2C_Read_N_Byte_from_RegAddr(uint8_t slvaddr, uint8_t regaddr, uint8_t n_byte);
+extern uint8_t GetDataIndex(uint8_t index);
 
 #endif /* !_NUVOTON_I2C_H_ */
