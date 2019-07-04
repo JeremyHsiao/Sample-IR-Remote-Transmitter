@@ -12,6 +12,7 @@
 //extern void I2C_MasterTx(uint32_t u32Status)  ;
 //extern int32_t Read_Write_SLAVE(uint8_t slvaddr) ;
 
+extern uint8_t I2C_Write_SlaveAdr_Only(uint8_t slvaddr);
 extern uint8_t I2C_Write_Byte(uint8_t slvaddr, uint8_t  i2c_data);
 extern uint8_t I2C_Write_Word(uint8_t slvaddr, uint16_t i2c_data);
 extern uint8_t I2C_Read_N_Byte_from_RegAddr(uint8_t slvaddr, uint8_t regaddr, uint8_t n_byte);

@@ -204,6 +204,24 @@ void init_I2C_Write_global_variable(uint8_t slvaddr)
 		g_u8SuccessFlag = 0;
 }
    
+uint8_t I2C_Write_SlaveAdr_Only(uint8_t slvaddr)
+{
+    	g_u8TxLen = 0;
+		init_I2C_Write_global_variable(slvaddr);
+
+        /* I2C function to write data to slave */
+        s_I2C0HandlerFn = (I2C_FUNC)I2C_MasterTx;
+
+        /* I2C as master sends START signal */
+        I2C_SET_CONTROL_REG(I2C0, I2C_STA);
+
+        /* Wait I2C Tx Finish */
+        while (g_u8EndFlag == 0);
+        g_u8EndFlag = 0;
+
+		return g_u8SuccessFlag;
+}
+
 uint8_t I2C_Write_Byte(uint8_t slvaddr, uint8_t i2c_data)
 {
 		// Fill data
