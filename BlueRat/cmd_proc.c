@@ -27,6 +27,7 @@
 #define RESTART_PASSWORD  (0x46535050)     // input password is FSPP for restart  
 
 uint8_t compare_result;
+uint32_t	IO_Extend_Output_Value;
 
 void EnterISP(void)
 {
@@ -259,6 +260,103 @@ void ProcessInputCommand(void)
         		I2C_Read_N_Byte_from_RegAddr(slvadr, regadr, n_byte);
 				// To-be-implemented: return I2C readback data
 		   	}
+			break;
+
+        case ENUM_CMD_SX1509_LOWBYTE_SET:
+           	{
+				const uint8_t	low_slave_adr = (0x3e<<1);
+                uint32_t output_data;
+
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+				I2C_Write_Word(low_slave_adr, (uint16_t)(0x0e00));
+				I2C_Write_Word(low_slave_adr, (uint16_t)(0x0f00));
+				I2C_Write_Word(low_slave_adr, (uint16_t)(0x1000|((output_data>>8)&0xff)) );
+				I2C_Write_Word(low_slave_adr, (uint16_t)(0x1100|((output_data)&0xff)) );
+				IO_Extend_Output_Value = (IO_Extend_Output_Value & 0xffff0000) | (output_data&0xffff);
+			}
+			break;
+
+        case ENUM_CMD_SX1509_HIGHBYTE_SET:
+           	{
+				const uint8_t	high_slave_adr = (0x70<<1);
+                uint32_t output_data;
+
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+				I2C_Write_Word(high_slave_adr, (uint16_t)(0x0e00));
+				I2C_Write_Word(high_slave_adr, (uint16_t)(0x0f00));
+				I2C_Write_Word(high_slave_adr, (uint16_t)(0x1000|((output_data>>8)&0xff)) );
+				I2C_Write_Word(high_slave_adr, (uint16_t)(0x1100|((output_data)&0xff)) );
+				IO_Extend_Output_Value = (IO_Extend_Output_Value & 0x0000ffff) | ((output_data<<16)&0xffff0000);
+			}
+			break;
+
+        case ENUM_CMD_SX1509_WRITE_BIT:
+           	{
+				uint8_t	slave_adr, bit_no;
+                uint32_t output_data;
+
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+				bit_no = (output_data>>8)&0xff;
+				if(output_data&0xff)
+				{
+					IO_Extend_Output_Value |= (1UL<<bit_no);
+				}
+				else
+				{
+					IO_Extend_Output_Value &= ~(1UL<<bit_no);
+				}
+																								  	
+				if(bit_no<=15)
+				{
+					slave_adr = (0x3e<<1);
+					output_data = IO_Extend_Output_Value & 0xffff;
+				}
+				else
+				{
+					slave_adr = (0x70<<1);
+					output_data = (IO_Extend_Output_Value>>16) & 0xffff;
+				}
+				bit_no &=0x0f;
+				if(bit_no<=7)
+				{
+					I2C_Write_Word(slave_adr, (uint16_t)(0x1100|((output_data)&0xff)) );
+				}
+				else
+				{
+					I2C_Write_Word(slave_adr, (uint16_t)(0x1000|((output_data>>8)&0xff)) );
+				}
+			}
+			break;
+
+        case ENUM_CMD_SX1509_TOGGLE_BIT:
+           	{
+				uint8_t	slave_adr, bit_no;
+                uint32_t output_data;
+
+                output_data = Next_Input_Parameter_Get() & 0xff;
+				bit_no = output_data;
+				IO_Extend_Output_Value ^= (1UL<<bit_no);
+																								  	
+				if(bit_no<=15)
+				{
+					slave_adr = (0x3e<<1);
+					output_data = IO_Extend_Output_Value & 0xffff;
+				}
+				else
+				{
+					slave_adr = (0x70<<1);
+					output_data = (IO_Extend_Output_Value>>16) & 0xffff;
+				}
+				bit_no &=0x0f;
+				if(bit_no<=7)
+				{
+					I2C_Write_Word(slave_adr, (uint16_t)(0x1100|((output_data)&0xff)) );
+				}
+				else
+				{
+					I2C_Write_Word(slave_adr, (uint16_t)(0x1000|((output_data>>8)&0xff)) );
+				}
+			}
 			break;
 
         // Add more Repeat Count

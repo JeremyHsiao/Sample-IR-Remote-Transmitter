@@ -63,9 +63,9 @@ typedef enum {
     ENUM_CMD_CODE_0XAF = 0xaf,
     ENUM_CMD_SPI_WRITE_WORD_MODE_00 = 0xb0,
     ENUM_CMD_I2C_WRITE_SLAVEADR_BYTE = 0xb1,
-    ENUM_CMD_CODE_0XB2 = 0xb2,
-    ENUM_CMD_CODE_0XB3 = 0xb3,
-    ENUM_CMD_CODE_0XB4 = 0xb4,
+    ENUM_CMD_SX1509_LOWBYTE_SET = 0xb2,
+    ENUM_CMD_SX1509_HIGHBYTE_SET = 0xb3,
+    ENUM_CMD_SX1509_WRITE_BIT = 0xb4,
     ENUM_CMD_CODE_0XB5 = 0xb5,
     ENUM_CMD_CODE_0XB6 = 0xb6,
     ENUM_CMD_CODE_0XB7 = 0xb7,
@@ -98,7 +98,7 @@ typedef enum {
     ENUM_CMD_CODE_0XD2 = 0xd2,
     ENUM_CMD_CODE_0XD3 = 0xd3,
     ENUM_CMD_CODE_0XD4 = 0xd4,
-    ENUM_CMD_CODE_0XD5 = 0xd5,
+    ENUM_CMD_SX1509_TOGGLE_BIT = 0xd5,
     ENUM_CMD_CODE_0XD6 = 0xd6,
     ENUM_CMD_CODE_0XD7 = 0xd7,
     ENUM_CMD_CODE_0XD8 = 0xd8,
@@ -125,7 +125,7 @@ typedef enum {
     ENUM_CMD_CODE_0XED = 0xed,
     ENUM_CMD_CODE_0XEE = 0xee,
     ENUM_CMD_CODE_0XEF = 0xef,
-    ENUM_CMD_CODE_0XF0 = 0xf0,
+    ENUM_CMD_DETECT_IO_EXTEND = 0xf0,
     ENUM_CMD_CODE_0XF1 = 0xf1,
     ENUM_CMD_CODE_0XF2 = 0xf2,
     ENUM_CMD_CODE_0XF3 = 0xf3,
@@ -165,6 +165,9 @@ typedef enum {
 #define _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_   "CNT:"  
 #define _CMD_GPIO_INPUT_RETURN_HEADER_                    "IN:"
 #define _CMD_SENSOR_INPUT_RETURN_HEADER_                  "SS:"
+
+#define _CMD_IO_EXTEND_DETECT_RETURN_HEADER_              "IO:"
+#define _CMD_IO_EXTEND_INPUT_RETURN_HEADER_               "EI:"
 
 extern void CheckIfISP(void);
 extern void ProcessInputCommand(void);
