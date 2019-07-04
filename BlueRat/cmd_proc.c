@@ -359,6 +359,17 @@ void ProcessInputCommand(void)
 			}
 			break;
 
+        case ENUM_CMD_DETECT_SX1509:
+			{
+				uint8_t	ret;
+				ret  = (I2C_Write_SlaveAdr_Only(0x70<<1))?3:0;
+				ret |= (I2C_Write_SlaveAdr_Only(0x3e<<1))?1:0;
+            	OutputString(_CMD_IO_EXTEND_DETECT_RETURN_HEADER_);   
+            	OutputHexValue(ret);
+            	uart_output_enqueue('\n');
+			}
+            break;
+
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {
