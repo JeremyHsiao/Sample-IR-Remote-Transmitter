@@ -21,6 +21,7 @@
 #include "cmd_proc.h"
 #include "version.h"
 #include "SPI_MCP41_42.h"
+#include "nuvoton_i2c.h"
 
 #define ISP_PASSWORD  (0x46574154)         // input password is FWAT for entering ISP  
 #define RESTART_PASSWORD  (0x46535050)     // input password is FSPP for restart  
@@ -227,7 +228,22 @@ void ProcessInputCommand(void)
 					 }
 
 						break;
+
+		case ENUM_CMD_I2C_WRITE_SLAVEADR_BYTE:
+           	{
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get() & 0xffff;
+        		I2C_Write_Byte((uint8_t)((output_data>>8)&0xff), (uint8_t)(output_data&0xff));
+		   	}
+			break;
 					 
+		case ENUM_CMD_I2C_WRITE_SLAVEADR_WORD:
+           	{
+                uint32_t output_data;
+                output_data = Next_Input_Parameter_Get() & 0xffffff;
+        		I2C_Write_Word((uint8_t)((output_data>>16)&0xff), (uint16_t)(output_data&0xffff));
+		   	}
+			break;
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {

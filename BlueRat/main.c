@@ -96,7 +96,8 @@ void SYS_Init(void)
     CLK_EnableModuleClock(ACMP_MODULE);	
     CLK_EnableModuleClock(ISP_MODULE);
     CLK_EnableModuleClock(ANA_MODULE);
-    
+    CLK_EnableModuleClock(I2C0_MODULE);
+   
     /* Select PWM module clock source */
     CLK_SetModuleClock(PWM0_MODULE, CLK_CLKSEL1_PWM0CH01SEL_HCLK, 0);
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HCLK, 0);
@@ -249,6 +250,9 @@ int main(void)
     ACMP_Open(ACMP,1,ACMP_CMP1VNEG_VBG,0);
     ACMP_ENABLE_INT(ACMP,1);
 
+	I2C_Open(I2C0, 400000);
+	I2C_EnableInt(I2C0);
+
     NVIC_EnableIRQ(PWM0_IRQn);  
     //NVIC_DisableIRQ(PWM0_IRQn);
     //NVIC_EnableIRQ(TMR0_IRQn);	
@@ -257,6 +261,7 @@ int main(void)
     NVIC_EnableIRQ(ACMP_IRQn);
     NVIC_EnableIRQ(EINT1_IRQn);      // Interrupt for PB1
     NVIC_EnableIRQ(GPAB_IRQn);       // Interrupt for GPIO -- used for PB7      
+    NVIC_EnableIRQ(I2C0_IRQn);
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
     WDT_MySetup();
