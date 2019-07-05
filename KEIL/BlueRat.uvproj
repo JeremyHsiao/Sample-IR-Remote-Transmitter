@@ -440,6 +440,11 @@
               <FileType>1</FileType>
               <FilePath>..\BlueRat\nuvoton_i2c.c</FilePath>
             </File>
+            <File>
+              <FileName>SX1509.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BlueRat\SX1509.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
