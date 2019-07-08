@@ -311,6 +311,27 @@ void ProcessInputCommand(void)
 			}
             break;
 
+		case ENUM_CMD_READ_SX1509:
+			{
+				uint32_t read_data;
+
+				I2C_Read_N_Byte_from_RegAddr((0x70<<1), 0x10, 2);
+				read_data  = g_au8TxData[0];
+				read_data<<=8;
+				read_data |= g_au8TxData[1];
+				read_data<<=8;
+
+				I2C_Read_N_Byte_from_RegAddr((0x3e<<1), 0x10, 2);
+				read_data |= g_au8TxData[0];
+				read_data<<=8;
+				read_data |= g_au8TxData[1];
+
+            	OutputString(_CMD_IO_EXTEND_INPUT_RETURN_HEADER_);   
+            	OutputHexValue(read_data);
+            	uart_output_enqueue('\n');
+			}
+            break;
+
         // Add more Repeat Count
         case ENUM_CMD_ADD_REPEAT_COUNT:
             {

@@ -126,7 +126,7 @@ typedef enum {
     ENUM_CMD_CODE_0XEE = 0xee,
     ENUM_CMD_CODE_0XEF = 0xef,
     ENUM_CMD_DETECT_SX1509 = 0xf0,
-    ENUM_CMD_CODE_0XF1 = 0xf1,
+    ENUM_CMD_READ_SX1509 = 0xf1,
     ENUM_CMD_CODE_0XF2 = 0xf2,
     ENUM_CMD_CODE_0XF3 = 0xf3,
     ENUM_CMD_CODE_0XF4 = 0xf4,
