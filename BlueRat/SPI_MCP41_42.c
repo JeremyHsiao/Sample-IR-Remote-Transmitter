@@ -8,7 +8,29 @@
 #include <stdio.h>
 #include <string.h>
 #include "N575.h"
+#include "SX1509.h"						 
 #include "SPI_MCP41_42.h"
+
+// It is defined within SX1509.h"					
+#ifdef SPI_BY_SX1509
+
+void SPI_CS(uint8_t value)
+{
+	SX1509_WritePin(SPI_CS_SX1509_GPIO,value);
+}
+
+void SPI_MOSI(uint8_t value)
+{
+	SX1509_WritePin(SPI_SI_SX1509_GPIO,value);
+}
+
+
+void SPI_CK(uint8_t value)
+{
+	SX1509_WritePin(SPI_SCK_SX1509_GPIO,value);
+}
+
+#else
 
 void SPI_CS(uint8_t value)
 {
@@ -36,6 +58,7 @@ void SPI_CK(uint8_t value)
 	SPI_CK_Port->DOUT = (value)?0xffffffff:0;
 }
 
+#endif // SPI_BY_SX1509
 
 /**************************************************************************************
  * spiWriteRegAddrOnly
