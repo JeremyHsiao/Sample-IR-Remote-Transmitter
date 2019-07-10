@@ -266,7 +266,7 @@ void ProcessInputCommand(void)
            	{
                 uint32_t output_data;
                 output_data = Next_Input_Parameter_Get() & 0xffff;
-				SX1509_WriteLowByte(output_data);
+				SX1509_WriteLowWord(output_data);
 			}
 			break;
 
@@ -274,7 +274,7 @@ void ProcessInputCommand(void)
            	{
                 uint32_t output_data;
                 output_data = Next_Input_Parameter_Get() & 0xffff;
-				SX1509_WriteHighByte(output_data);
+				SX1509_WriteHighWord(output_data);
 			}
 			break;
 

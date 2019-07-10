@@ -16,18 +16,18 @@
 
 void SPI_CS(uint8_t value)
 {
-	SX1509_WritePin(SPI_CS_SX1509_GPIO,value);
+	SX1509_WritePin_UnMasked(SPI_CS_SX1509_GPIO,value);
 }
 
 void SPI_MOSI(uint8_t value)
 {
-	SX1509_WritePin(SPI_SI_SX1509_GPIO,value);
+	SX1509_WritePin_UnMasked(SPI_SI_SX1509_GPIO,value);
 }
 
 
 void SPI_CK(uint8_t value)
 {
-	SX1509_WritePin(SPI_SCK_SX1509_GPIO,value);
+	SX1509_WritePin_UnMasked(SPI_SCK_SX1509_GPIO,value);
 }
 
 #else
@@ -56,6 +56,15 @@ void SPI_CK(uint8_t value)
 {
 	SPI_CK_Port->DATMSK = SPI_CK_Bitmask;
 	SPI_CK_Port->DOUT = (value)?0xffffffff:0;
+}
+
+void Init_SPI_Pin(void)
+{
+	GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_OUTPUT);
+	GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_OUTPUT);
+	GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_OUTPUT);
+	SPI_CS(1);
+	SPI_CK(0);
 }
 
 #endif // SPI_BY_SX1509

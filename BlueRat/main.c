@@ -20,6 +20,7 @@
 #include "fmc.h"
 #include "cmd_proc.h"
 #include "version.h"
+#include "SX1509.h"
 
 #define _48MHZ_	 			(__HSI)
 
@@ -267,7 +268,9 @@ int main(void)
     WDT_MySetup();
     NVIC_EnableIRQ(WDT_IRQn);
 #endif // ENABLE_WATCH_DOG_TIMER
-    
+
+	SX1509_Init_SPI_Pin();    
+
     while(1)
     {
         if(!uart_input_queue_empty_status())

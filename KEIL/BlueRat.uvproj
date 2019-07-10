@@ -46,7 +46,7 @@
           <OutputName>BlueRat</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\lst\</ListingPath>
@@ -343,7 +343,7 @@
             <uThumb>0</uThumb>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_ENABLE_SEMIHOST_, ENABLE_WATCH_DOG_TIMER</Define>
+              <Define>DEBUG_ENABLE_SEMIHOST_, __ENABLE_WATCH_DOG_TIMER</Define>
               <Undefine></Undefine>
               <IncludePath>..\Library\CMSIS\Include;..\Library\Device\Nuvoton\N575\Include;..\Library\StdDriver\inc</IncludePath>
             </VariousControls>
