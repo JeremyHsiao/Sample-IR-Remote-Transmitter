@@ -343,7 +343,7 @@
             <uThumb>0</uThumb>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_ENABLE_SEMIHOST_, __ENABLE_WATCH_DOG_TIMER</Define>
+              <Define>DEBUG_ENABLE_SEMIHOST_, ENABLE_WATCH_DOG_TIMER</Define>
               <Undefine></Undefine>
               <IncludePath>..\Library\CMSIS\Include;..\Library\Device\Nuvoton\N575\Include;..\Library\StdDriver\inc</IncludePath>
             </VariousControls>
