@@ -15,8 +15,15 @@ uint32_t	IO_Extend_Output_Value=0;
 
 void SX1509_Init_SPI_Pin(void)
 {
-	 SX1509_WritePin_UnMasked(SPI_CS_SX1509_GPIO, 1);
-	 SX1509_WritePin_UnMasked(SPI_SCK_SX1509_GPIO, 0);
+	const uint8_t	low_slave_adr = (0x3e<<1);
+	const uint8_t	high_slave_adr = (0x70<<1);
+
+	I2C_Write_Word(low_slave_adr, (uint16_t)(0x0e00));
+	I2C_Write_Word(low_slave_adr, (uint16_t)(0x0f00));
+	I2C_Write_Word(high_slave_adr, (uint16_t)(0x0e00));
+	I2C_Write_Word(high_slave_adr, (uint16_t)(0x0f00));
+	SX1509_WritePin_UnMasked(SPI_CS_SX1509_GPIO, 1);
+	SX1509_WritePin_UnMasked(SPI_SCK_SX1509_GPIO, 0);
 }
 
 uint32_t Process_Value_Mask_for_SPI_PIN(uint32_t input_value)
