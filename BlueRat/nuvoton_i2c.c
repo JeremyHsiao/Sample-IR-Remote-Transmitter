@@ -263,6 +263,58 @@ uint8_t I2C_Write_Word(uint8_t slvaddr, uint16_t i2c_data)
 		return g_u8SuccessFlag;
 }
 
+uint8_t I2C_Write_3Byte(uint8_t slvaddr, uint32_t i2c_data)
+{
+		// Fill data
+	    g_au8TxData[2] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+	    g_au8TxData[1] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+	    g_au8TxData[0] = (uint8_t) (i2c_data & 0x000000FF);
+    	g_u8TxLen = 3;
+		init_I2C_Write_global_variable(slvaddr);
+
+        /* I2C function to write data to slave */
+        s_I2C0HandlerFn = (I2C_FUNC)I2C_MasterTx;
+
+        /* I2C as master sends START signal */
+        I2C_SET_CONTROL_REG(I2C0, I2C_STA);
+
+        /* Wait I2C Tx Finish */
+        while (g_u8EndFlag == 0);
+        g_u8EndFlag = 0;
+
+		return g_u8SuccessFlag;
+}
+
+uint8_t I2C_Write_Reg_with_Long(uint8_t slvaddr, uint8_t regaddr, uint32_t i2c_data)
+{
+		// Fill data
+		g_au8TxData[0] = regaddr;
+	    g_au8TxData[4] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+	    g_au8TxData[3] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+	    g_au8TxData[2] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+	    g_au8TxData[1] = (uint8_t) (i2c_data & 0x000000FF);
+		i2c_data>>=8;
+    	g_u8TxLen = 5;
+		init_I2C_Write_global_variable(slvaddr);
+
+        /* I2C function to write data to slave */
+        s_I2C0HandlerFn = (I2C_FUNC)I2C_MasterTx;
+
+        /* I2C as master sends START signal */
+        I2C_SET_CONTROL_REG(I2C0, I2C_STA);
+
+        /* Wait I2C Tx Finish */
+        while (g_u8EndFlag == 0);
+        g_u8EndFlag = 0;
+
+		return g_u8SuccessFlag;
+}
+
 uint8_t I2C_Read_N_Byte_from_RegAddr(uint8_t slvaddr, uint8_t regaddr, uint8_t n_byte)
 {
  		// Fill data

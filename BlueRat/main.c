@@ -21,6 +21,7 @@
 #include "cmd_proc.h"
 #include "version.h"
 #include "SX1509.h"
+#include "SPI_MCP41_42.h"
 
 #define _48MHZ_	 			(__HSI)
 
@@ -263,13 +264,18 @@ int main(void)
     NVIC_EnableIRQ(EINT1_IRQn);      // Interrupt for PB1
     NVIC_EnableIRQ(GPAB_IRQn);       // Interrupt for GPIO -- used for PB7      
     NVIC_EnableIRQ(I2C0_IRQn);
+#ifdef SPI_BY_SX1509
+	SX1509_Init_SPI_Pin();    
+#endif // #ifdef SPI_BY_SX1509
+                GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_OUTPUT);
+                GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_OUTPUT);
+                GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_OUTPUT);
+
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
     WDT_MySetup();
     NVIC_EnableIRQ(WDT_IRQn);
 #endif // ENABLE_WATCH_DOG_TIMER
-
-	SX1509_Init_SPI_Pin();    
 
     while(1)
     {
