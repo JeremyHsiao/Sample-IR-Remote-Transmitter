@@ -26,6 +26,24 @@ void SX1509_Init_SPI_Pin(void)
 }
 #endif // #ifdef SPI_BY_SX1509
 
+void SX1509_RESET(void)
+{
+	SX1509_NRESET_GPIO_PORT->DATMSK = SX1509_NRESET_GPIO_MASK;
+	SX1509_NRESET_GPIO_PORT->DOUT = 0;
+
+	__NOP();
+	__NOP();
+	__NOP();
+	__NOP();
+	__NOP();
+
+	SX1509_NRESET_GPIO_PORT->DOUT = 0xFFFFFFFF;
+
+#ifdef SPI_BY_SX1509
+	SX1509_Init_SPI_Pin();
+#endif // #ifdef SPI_BY_SX1509
+}
+
 uint32_t Process_Value_Mask_for_SPI_PIN(uint32_t input_value)
 {
 #ifdef SPI_BY_SX1509

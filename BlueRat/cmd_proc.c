@@ -311,6 +311,15 @@ void ProcessInputCommand(void)
 			}
             break;
 
+        case ENUM_CMD_RESET_SX1509:
+			{
+				uint8_t	ret;
+				ret  = I2C_Write_3Byte((0x70<<1), 0x7d1234);
+				ret |= I2C_Write_3Byte((0x3e<<1), 0x7d1234);
+				SX1509_RESET();
+ 			}
+            break;
+
 		case ENUM_CMD_READ_SX1509:
 			{
 				uint32_t read_data;

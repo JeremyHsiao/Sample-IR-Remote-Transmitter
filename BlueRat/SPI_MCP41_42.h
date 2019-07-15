@@ -16,13 +16,13 @@ extern void spiWriteRegWord(const unsigned char regAddr, const unsigned short re
 
 #define SPI_CS_Port			PB
 #define SPI_CS_Pin			0
-#define SPI_CS_Bitmask		(~(1<<(SPI_CS_Pin)))		// to-be-updated
+#define SPI_CS_Bitmask		(~(1UL<<(SPI_CS_Pin)))		// to-be-updated
 #define SPI_CK_Port			PB
 #define SPI_CK_Pin			1
-#define SPI_CK_Bitmask		(~(1<<(SPI_CK_Pin)))		// to-be-updated
+#define SPI_CK_Bitmask		(~(1UL<<(SPI_CK_Pin)))		// to-be-updated
 #define SPI_MOSI_Port		PB
 #define SPI_MOSI_Pin		7
-#define SPI_MOSI_Bitmask	(~(1<<(SPI_MOSI_Pin)))		// to-be-updated
+#define SPI_MOSI_Bitmask	(~(1UL<<(SPI_MOSI_Pin)))		// to-be-updated
 //#define SPI_MISO_Port		PA
 //#define SPI_MISO_Pin		3
 //#define SPI_MISO_Bitmask	(~(1<<(SPI_MISO_Pin)))		// to-be-updated

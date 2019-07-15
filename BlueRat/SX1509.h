@@ -15,8 +15,12 @@ extern void SX1509_WriteHighWord(uint16_t output_data);
 extern void SX1509_WritePin(uint8_t bit_no, uint8_t output_data);
 extern void SX1509_WritePin_UnMasked(uint8_t bit_no, uint8_t output_data);
 extern void SX1509_TogglePin(uint8_t bit_no);	  
-extern void SX1509_Init_SPI_Pin(void);
-  
+extern void SX1509_RESET(void);
+
+#define SX1509_NRESET_GPIO_PORT     PB
+#define SX1509_NRESET_GPIO_PIN      0  
+#define SX1509_NRESET_GPIO_MASK		(~(1UL<<(SX1509_NRESET_GPIO_PIN)))		// to-be-updated
+
 
 #define SPI_BY_SX1509
 #ifdef SPI_BY_SX1509

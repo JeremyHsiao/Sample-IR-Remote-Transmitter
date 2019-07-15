@@ -176,18 +176,30 @@ void SYS_Init(void)
     GPIO_SetMode(PA, BIT11, GPIO_MODE_QUASI);
     GPIO_SetMode(PA, BIT14, GPIO_MODE_QUASI);
     GPIO_SetMode(PA, BIT15, GPIO_MODE_QUASI);
-    GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
+
+#ifdef SPI_BY_SX1509	  	
+    // SPI is controlled by I2C command, so no need to change 3 pins to output
+    //GPIO_SetMode(PB, BIT0, GPIO_MODE_QUASI);
+	GPIO_SetMode(SX1509_NRESET_GPIO_PORT, SX1509_NRESET_GPIO_PIN, GPIO_MODE_OUTPUT);
     GPIO_SetMode(PB, BIT1, GPIO_MODE_QUASI);
     GPIO_SetMode(PB, BIT7, GPIO_MODE_QUASI);
     GPIO_EnableInt(PB, 1, GPIO_INT_FALLING);    // Add GPIO PB1 falling-edge interrupt 
     GPIO_EnableInt(PB, 7, GPIO_INT_FALLING);    // Add GPIO PB7 falling-edge interrupt 
+    PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+#else						
+    // Not connect to SX1509 --> SPI will be done via GPIO pin output
+    GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_OUTPUT);
+    GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_OUTPUT);
+    GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_OUTPUT);
+    PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+    PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
+#endif // #ifdef SPI_BY_SX1509
+
     //GPIO_SetMode(PB, BIT7, GPIO_MODE_INPUT);
     // Set output as 1 for all Quasi-bidirectional mode GPIO
     PA->DATMSK = ~(GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
     PA->DOUT = (GPIO_DOUT_DOUT10_Msk|GPIO_DOUT_DOUT11_Msk|GPIO_DOUT_DOUT14_Msk|GPIO_DOUT_DOUT15_Msk);
-    PB->DATMSK = ~(GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
-    //PB->DOUT = (GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
-    PB->DOUT = (GPIO_DOUT_DOUT7_Msk|GPIO_DOUT_DOUT1_Msk|GPIO_DOUT_DOUT0_Msk);
     
     // Set output as 1 for all PWM mode GPIO (1 to inverted PWM GPIO)
     GPIO_SetMode(PA, BIT8, GPIO_MODE_OUTPUT);
@@ -264,12 +276,7 @@ int main(void)
     NVIC_EnableIRQ(EINT1_IRQn);      // Interrupt for PB1
     NVIC_EnableIRQ(GPAB_IRQn);       // Interrupt for GPIO -- used for PB7      
     NVIC_EnableIRQ(I2C0_IRQn);
-#ifdef SPI_BY_SX1509
-	SX1509_Init_SPI_Pin();    
-#endif // #ifdef SPI_BY_SX1509
-                GPIO_SetMode(SPI_CS_Port, SPI_CS_Bitmask, GPIO_MODE_OUTPUT);
-                GPIO_SetMode(SPI_CK_Port, SPI_CK_Bitmask, GPIO_MODE_OUTPUT);
-                GPIO_SetMode(SPI_MOSI_Port, SPI_MOSI_Bitmask, GPIO_MODE_OUTPUT);
+	SX1509_RESET();
 
 #ifdef ENABLE_WATCH_DOG_TIMER
     // Setup Watch Dog Timer
